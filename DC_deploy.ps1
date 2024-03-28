@@ -41,6 +41,8 @@ foreach ($user in $users){
     ConvertTo-Csv -InputObject $export -NoTypeInformation | Out-File .\password.csv -Append -Encoding Ascii
 }
 
+# Enable firewall
+Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
 
 # Download needed packages
 
@@ -55,3 +57,8 @@ Invoke-WebRequest https://www.malwarebytes.com/api/downloads/mb-windows-mb4 -Out
 #   curl sysinternals
 Invoke-WebRequest https://download.sysinternals.com/files/SysinternalsSuite.zip -OutFile "SysinternalsSuite.zip"
 Expand-Archive -Path SysinternalsSuite.zip -DestinationPath .\Sysinternals\ -Force
+
+#   curl wazuh
+Invoke-WebRequest https://packages.wazuh.com/4.x/windows/wazuh-agent-4.7.1-1.msi -OutFile "wazuh-agent-4.7.1-1.msi"
+$ip = Read-Host "Enter the IP of the Wazuh server"
+.\wazuh-agent-4.7.1-1.msi /q WAZUH_MANAGER=$ip
