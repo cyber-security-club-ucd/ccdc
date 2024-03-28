@@ -1,4 +1,0 @@
-# Nmap 7.80 scan initiated Wed Mar 27 20:40:24 2024 as: nmap -T4 -A -Pn -p 1-3000 -oG - 192.168.0.33
-Host: 192.168.0.33 (HOME)	Status: Up
-Host: 192.168.0.33 (HOME)	Ports: 22/open/tcp//ssh//OpenSSH for_Windows_8.1 (protocol 2.0)/, 135/open/tcp//msrpc//Microsoft Windows RPC/, 139/open/tcp//netbios-ssn//Microsoft Windows netbios-ssn/, 445/open/tcp//microsoft-ds?///	Ignored State: filtered (2996)
-# Nmap done at Wed Mar 27 20:41:20 2024 -- 1 IP address (1 host up) scanned in 56.07 seconds
