@@ -1,9 +1,10 @@
 import sys
 import subprocess
 import re
+from portscan import *
 
 ip_addr_pattern = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.(?!0)\d{1,3})') # Regex to pull IP addresses, exclude the network address
-scan_ports_pattern = re.compile(r'(?<=Ports:).*/')
+scan_ports_pattern = re.compile(r'(?<=Ports:).*/') # Regex to pull the open ports section from the nmap scan
 
 #
 # READ IN THE NAME OF THE KNOWN HOSTS FILE FROM SYS ARGV
@@ -43,16 +44,51 @@ for x in output.splitlines():
 down_hosts = file_set - scan_set
 print("Down hosts:")
 print(down_hosts)
+print()
 
 # Unknown (possibly rogue) hosts on the network
 unknown_hosts = scan_set - file_set
 print("Unknown hosts:")
 print(unknown_hosts)
+print()
 
+# Known hosts that are up
+up_hosts = file_set & scan_set
+print("Up hosts:")
+print(up_hosts)
+print()
 
-for host in down_hosts:
+# Scan the good hosts
+for host in up_hosts:
+    print("Scanning up host: " + host)
+
     output = subprocess.check_output(["nmap", "-T4", "-A", "-Pn", host, "-oG", "-"]).decode("UTF-8")
+    print(output)
+    print()
     
     ports_string = scan_ports_pattern.search(output)
     if ports_string != None:
-        print(ports_string[0])
+        results = PortScan(ports_string[0])
+        print(results)
+    else:
+        print("No open ports detected")
+    
+    print()
+    
+
+
+
+for host in down_hosts:
+    print("Scanning possibly down host: " + host)
+    output = subprocess.check_output(["nmap", "-T4", "-A", "-Pn", host, "-oG", "-"]).decode("UTF-8")
+    
+    print(output)
+    print()
+
+    ports_string = scan_ports_pattern.search(output)
+    if ports_string != None:
+        results = PortScan(ports_string[0])
+        print(results)
+    else:
+        print("No open ports detected, host down or unresponsive")
+    print()

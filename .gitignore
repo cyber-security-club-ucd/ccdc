@@ -1,2 +1,10 @@
 # Ignore test input files
 *.txt
+
+# Ignore the testbench
+bench.py
+
+# Ignore pyinstaller files
+__pycache__/*
+build/*
+*.spec
