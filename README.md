@@ -9,8 +9,11 @@ moo
 
 
 ## Changelog
-Revision 3/27/2023 (Jason)
+Revision 3/29/2023
+- Started development of GUI version of script, currently not usable (use the dist CLI tools)
+
+Revision 3/27/2023
 - Network scanner (basically a Python wrapper script for Nmap, visualize "up" and "down" hosts)
 
-Revision 12/21/2023 (Jason)
+Revision 12/21/2023
 - Domain Controller deploy script
