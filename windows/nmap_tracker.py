@@ -58,6 +58,9 @@ print("Up hosts:")
 print(up_hosts)
 print()
 
+# Set up dictionary with port scan object to store results
+scan_results = {}
+
 # Scan the good hosts
 for host in up_hosts:
     print("Scanning up host: " + host)
@@ -66,11 +69,10 @@ for host in up_hosts:
 
     ports_string = scan_ports_pattern.search(output)
     if ports_string != None:
-        results = PortScan(ports_string[0])
-        print(results)
+        scan_results[host] = PortScan(ports_string[0])
     else:
         print("No open ports detected")
-    
+        scan_results[host] = None
     print()
     
 
@@ -82,8 +84,30 @@ for host in down_hosts:
 
     ports_string = scan_ports_pattern.search(output)
     if ports_string != None:
-        results = PortScan(ports_string[0])
-        print(results)
+        scan_results[host] = PortScan(ports_string[0])
+        down_hosts.remove(host)
+        up_hosts.add(host)
     else:
         print("No open ports detected, host down or unresponsive")
+        scan_results[host] = None
     print()
+
+
+print("SUMMARY: ")
+print("Good hosts that are UP: ")
+sorted_good = sorted(up_hosts)
+for x in sorted_good:
+    print(x)
+    print(scan_results[x])
+print()
+
+print("Good hosts that are DOWN!")
+sorted_down = sorted(down_hosts)
+for x in sorted_down:
+    print(x)
+    print(scan_results[x])
+print()
+print("Unknown IPs on the network, Investigate")
+sorted_unknown = sorted(unknown_hosts)
+for x in sorted_unknown:
+    print(x)
