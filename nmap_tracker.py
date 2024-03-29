@@ -30,7 +30,7 @@ else:
 #
 
 scan_set = set()
-address = "192.168.0.0/24"
+address = input("Enter the IP network and CIDR subnet mask abbreviation (EX: 192.168.0.0/24): ")
 print("Scanning " + address)
 output = subprocess.check_output(["nmap", "-n", "-sn", address, "-oG", "-"]).decode("UTF-8")
 
@@ -63,9 +63,7 @@ for host in up_hosts:
     print("Scanning up host: " + host)
 
     output = subprocess.check_output(["nmap", "-T4", "-A", "-Pn", host, "-oG", "-"]).decode("UTF-8")
-    print(output)
-    print()
-    
+
     ports_string = scan_ports_pattern.search(output)
     if ports_string != None:
         results = PortScan(ports_string[0])
@@ -81,9 +79,6 @@ for host in up_hosts:
 for host in down_hosts:
     print("Scanning possibly down host: " + host)
     output = subprocess.check_output(["nmap", "-T4", "-A", "-Pn", host, "-oG", "-"]).decode("UTF-8")
-    
-    print(output)
-    print()
 
     ports_string = scan_ports_pattern.search(output)
     if ports_string != None:
