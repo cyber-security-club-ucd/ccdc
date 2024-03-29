@@ -1,0 +1,10 @@
+# Ignore test input files
+windows/*.txt
+
+# Ignore the testbench
+windows/bench.py
+
+# Ignore pyinstaller files
+windows/__pycache__/*
+windows/build/*
+windows/*.spec
