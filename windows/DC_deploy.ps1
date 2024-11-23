@@ -54,11 +54,15 @@ Invoke-WebRequest https://nmap.org/dist/nmap-7.94-setup.exe -OutFile "nmap-setup
 Invoke-WebRequest https://www.malwarebytes.com/api/downloads/mb-windows-mb4 -OutFile "mbsetup.exe"
 ./mbsetup.exe
 
+#   curl ad-peas light
+Invoke-WebRequest https://raw.githubusercontent.com/61106960/adPEAS/refs/heads/main/adPEAS-Light.ps1 -OutFile "adPEAS-Light.ps1"
+
 #   curl sysinternals
 Invoke-WebRequest https://download.sysinternals.com/files/SysinternalsSuite.zip -OutFile "SysinternalsSuite.zip"
 Expand-Archive -Path SysinternalsSuite.zip -DestinationPath .\Sysinternals\ -Force
 
-#   curl wazuh
-Invoke-WebRequest https://packages.wazuh.com/4.x/windows/wazuh-agent-4.7.1-1.msi -OutFile "wazuh-agent-4.7.1-1.msi"
-$ip = Read-Host "Enter the IP of the Wazuh server"
-.\wazuh-agent-4.7.1-1.msi /q WAZUH_MANAGER=$ip
+#   curl pingcastle
+Invoke-WebRequest https://github.com/netwrix/pingcastle/releases/download/3.3.0.1/PingCastle_3.3.0.1.zip -OutFile "PingCastle_3.3.0.1.zip"
+
+#   curl STIG GPOs
+Invoke-WebRequest https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_STIG_GPO_Package_October_2024.zip -OutFile "C:\Temp\STIG_GPO.zip"
