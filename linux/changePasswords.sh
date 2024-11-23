@@ -4,12 +4,17 @@ echo "What would you like for your new password"
 # read -s newPassword # Input is hidden (Don't mess up)
 read newPassword
 
-while IFS=: read user _; do
-	echo "$user:$newPassword" | chpasswd
+while IFS=: read user _ uid _; do
+	if [ "$uid" -ge 1000 ]; then
 
-	if [ $? -eq 0 ]; then
-		echo "$user password changed"
-	else
-		echo "$user failed"
+		echo "$user:$newPassword" | chpasswd
+
+		if [ $? -eq 0 ]; then
+			echo "$user password changed"
+		else
+			echo "$user failed"
+		fi
+
 	fi
+
 done < /etc/passwd
