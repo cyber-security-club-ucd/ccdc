@@ -5,6 +5,11 @@ echo "What would you like for your new password"
 read newPassword
 
 while IFS=: read user _; do
-	echo $user
-	echo "$user:$newPassword"
+	echo "$user:$newPassword" | chpasswd
+
+	if [ $? -eq 0 ]; then
+		echo "$user password changed"
+	else
+		echo "$user failed"
+	fi
 done < /etc/passwd
