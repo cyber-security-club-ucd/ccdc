@@ -46,6 +46,9 @@ Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
 
 # Download needed packages
 
+# Fix the SSL issue
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 #   curl nmap
 Invoke-WebRequest https://nmap.org/dist/nmap-7.94-setup.exe -OutFile "nmap-setup.exe"
 ./nmap-setup.exe
