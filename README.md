@@ -4,6 +4,7 @@ moo
 1) Run DC_deploy to set up neccesary tools and change passwords
 
 ```
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/cyber-security-club-ucd/ccdc/refs/heads/main/windows/DC_deploy.ps1'))
 ```
 
