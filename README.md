@@ -2,6 +2,11 @@ moo
 
 ## Windows Tools Usage
 1) Run DC_deploy to set up neccesary tools and change passwords
+
+```
+iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/cyber-security-club-ucd/ccdc/refs/heads/main/windows/DC_deploy.ps1'))
+```
+
 2) Set up the network scanner, install the binaries from `/dist`
     * Usage: `nmap_tracker.exe / nmap_tracker (hosts_file)`
     * Hosts file is to be a sequential list of "known" IP addresses, separated with a newline.
