@@ -19,27 +19,30 @@ $currentPrincipal = New-Object Security.Principal.WindowsPrincipal( [Security.Pr
 
 # Change password for Domain users
 Set-PSReadlineOption -HistorySaveStyle SaveNothing
-Write-Output "Enter the new password for all users"
-$p = read-host -AsSecureString
-((get-aduser -F *).sid.value).foreach{set-adaccountpassword -identity $psitem -newpassword $p}
+
+$userList = @()
+
+# API Call to get a secure password
+((get-aduser -F *).sid.value).foreach{
+	$objSID = New-Object System.Security.Principal.SecurityIdentifier($psitem)
+    $objUser = $objSID.Translate( [System.Security.Principal.NTAccount])
+    $username = $objUser.Value
+	
+	Write-Host "Changing $username"
+	
+	$api = Invoke-RestMethod -Uri "https://api.genratr.com/?special&lowercase&uppercase&numbers" -Method Get
+	$p = ConvertTo-SecureString -String $api.password -AsPlainText -Force
+	set-adaccountpassword -identity $psitem -newpassword $p
+
+    
+
+    $userList += [PSCustomObject]@{username = $username; password = $api.password}
+}
 
 
 # Generate .csv for password changes
+$userList | Export-Csv -Path ".\password.csv" -NoTypeInformation
 
-#   Yeah you can't really print securestring b/c it would defeat the purpose...
-#   Resolve this later
-$p = read-host
-$users = Get-ADUser -Filter * | Select-Object SAMAccountName
-
-
-foreach ($user in $users){
-    $export = [PsCustomObject]@{
-        name = ($($user.SAMAccountName))
-        password = $p
-    }
-    
-    ConvertTo-Csv -InputObject $export -NoTypeInformation | Out-File .\password.csv -Append -Encoding Ascii
-}
 
 # Enable firewall
 Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
@@ -66,6 +69,9 @@ Expand-Archive -Path SysinternalsSuite.zip -DestinationPath .\Sysinternals\ -For
 
 #   curl pingcastle
 Invoke-WebRequest https://github.com/netwrix/pingcastle/releases/download/3.3.0.1/PingCastle_3.3.0.1.zip -OutFile "PingCastle_3.3.0.1.zip"
+Expand-Archive -Path PingCastle_3.3.0.1.zip -DestinationPath .\PingCastle\ -Force
+.\PingCastle\PingCastle.exe --healthcheck
 
 #   curl STIG GPOs
 Invoke-WebRequest https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_STIG_GPO_Package_October_2024.zip -OutFile "C:\Temp\STIG_GPO.zip"
+Expand-Archive -Path "C:\Temp\STIG_GPO.zip" -DestinationPath "C:\Temp\STIG\" -Force
