@@ -20,6 +20,9 @@ if ! command -v aws &>/dev/null; then
     sudo ./aws/install
 fi
 
+# some more tools that nice to have
+sudo apt -y install btop fzf fd-find ripgrep nnn
+
 # Not likely to get used during comp, but why not
 if ! command -v terraform &>/dev/null; then
     sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
