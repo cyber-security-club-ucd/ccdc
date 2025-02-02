@@ -49,6 +49,10 @@ Set-ADAccountPassword -identity Administrator -newpassword $p
 # Enable firewall
 Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
 
+# Disable SMBv1
+Set-SmbServerConfiguration -EnableSMB1Protocol $false
+Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol
+
 # Download needed packages
 
 # Fix the SSL issue
