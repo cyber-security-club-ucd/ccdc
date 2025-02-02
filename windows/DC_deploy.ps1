@@ -54,25 +54,34 @@ Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
 # Fix the SSL issue
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+# Turn off progress bar to speed up downloads
+$ProgressPreference = 'SilentlyContinue'
+
 #   curl nmap
 Invoke-WebRequest https://nmap.org/dist/nmap-7.94-setup.exe -OutFile "nmap-setup.exe"
 ./nmap-setup.exe
 
 #   curl malwarebytes
-Invoke-WebRequest https://www.malwarebytes.com/api/downloads/mb-windows-mb4 -OutFile "mbsetup.exe"
+Invoke-WebRequest https://downloads.malwarebytes.com/file/mb-windows -OutFile "mbsetup.exe"
 ./mbsetup.exe
 
 #   curl ad-peas light
 Invoke-WebRequest https://raw.githubusercontent.com/61106960/adPEAS/refs/heads/main/adPEAS-Light.ps1 -OutFile "adPEAS-Light.ps1"
+Start-Process powershell {
+    . ./adPEAS-light.ps1
+    Invoke-adPEAS -NoColor -OutputFile ".\adPEAS_output.txt"
+}
 
 #   curl sysinternals
 Invoke-WebRequest https://download.sysinternals.com/files/SysinternalsSuite.zip -OutFile "SysinternalsSuite.zip"
 Expand-Archive -Path SysinternalsSuite.zip -DestinationPath .\Sysinternals\ -Force
 
-#   curl pingcastle
+#   curl pingcastle (USE AN OLDER VERSION ON SERVER 2016!!)
 Invoke-WebRequest https://github.com/netwrix/pingcastle/releases/download/3.3.0.1/PingCastle_3.3.0.1.zip -OutFile "PingCastle_3.3.0.1.zip"
 Expand-Archive -Path PingCastle_3.3.0.1.zip -DestinationPath .\PingCastle\ -Force
-.\PingCastle\PingCastle.exe --healthcheck
+Start-Process powershell {
+    .\PingCastle\PingCastle.exe --healthcheck
+}
 
 #   curl STIG GPOs
 Invoke-WebRequest https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_STIG_GPO_Package_October_2024.zip -OutFile "C:\Temp\STIG_GPO.zip"
