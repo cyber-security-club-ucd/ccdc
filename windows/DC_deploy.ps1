@@ -17,6 +17,9 @@ $currentPrincipal = New-Object Security.Principal.WindowsPrincipal( [Security.Pr
     }
 }
 
+# Fix the SSL issue
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 # Change password for Domain users
 Set-PSReadlineOption -HistorySaveStyle SaveNothing
 
@@ -25,14 +28,14 @@ $userList = @()
 # API Call to get a secure password
 ((get-aduser -F *).sid.value).foreach{
 	$objSID = New-Object System.Security.Principal.SecurityIdentifier($psitem)
-    $objUser = $objSID.Translate( [System.Security.Principal.NTAccount])
-    $username = $objUser.Value
+    $objUser = $objSID.Translate([System.Security.Principal.NTAccount])
+    $username = ($objUser.Value -split "\\")[1] # Quotient only uses username with no domain
 	
 	Write-Host "Changing $username"
 	
-	$api = Invoke-RestMethod -Uri "https://api.genratr.com/?special&lowercase&uppercase&numbers" -Method Get
+	$api = Invoke-RestMethod -Uri "https://api.genratr.com/?length=16&lowercase&uppercase&numbers" -Method Get
 	$p = ConvertTo-SecureString -String $api.password -AsPlainText -Force
-	Set-ADAccountPassword -identity $psitem -newpassword $p
+	Set-ADAccountPassword -identity $psitem -newpassword $p -Reset # Do we need reset?
 
     
     $userList += [PSCustomObject]@{username = $username; password = $api.password}
@@ -40,7 +43,7 @@ $userList = @()
 
 
 # Generate .csv for password changes
-$userList | Export-Csv -Path ".\password.csv" -NoTypeInformation
+$userList | ConvertTo-Csv -NoTypeInformation | ForEach-Object {$_ -replace '"',''} | Out-File ".\balls.csv"
 
 Write-Host "Reset the password for Administrator so you don't get locked out"
 $p = Read-Host -AsSecureString
@@ -54,9 +57,6 @@ Set-SmbServerConfiguration -EnableSMB1Protocol $false
 Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol
 
 # Download needed packages
-
-# Fix the SSL issue
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # Turn off progress bar to speed up downloads
 $ProgressPreference = 'SilentlyContinue'
