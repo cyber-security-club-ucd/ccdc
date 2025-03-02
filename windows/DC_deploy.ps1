@@ -84,6 +84,11 @@ function downloadTools {
     Invoke-WebRequest https://download.sysinternals.com/files/SysinternalsSuite.zip -OutFile "SysinternalsSuite.zip"
     Expand-Archive -Path SysinternalsSuite.zip -DestinationPath .\Sysinternals\ -Force
 
+    #   setup sysmon
+    Set-Location .\Sysinternals
+    Invoke-WebRequest https://raw.githubusercontent.com/SwiftOnSecurity/sysmon-config/refs/heads/master/sysmonconfig-export.xml -OutFile config.xml
+    .\sysmon.exe -accepteula -i config.xml
+
     #   curl pingcastle (USE AN OLDER VERSION ON SERVER 2016!!)
     Invoke-WebRequest https://github.com/netwrix/pingcastle/releases/download/3.3.0.1/PingCastle_3.3.0.1.zip -OutFile "PingCastle_3.3.0.1.zip"
     Expand-Archive -Path PingCastle_3.3.0.1.zip -DestinationPath .\PingCastle\ -Force
