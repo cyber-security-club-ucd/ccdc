@@ -76,11 +76,6 @@ sshConfigSetUp() {
     sudo systemctl reload ssh
 }
 
-dockerCheck() {
-    containers=$(docker ps -a)
-    composed=$(docker compose ls)
-}
-
 # Got through part of logging but I think this is gonna be complex
 auditdSetUp() {
     source /etc/os-release
@@ -151,3 +146,12 @@ laurelSetUp() {
         sudo cp ./laurelPlugin /etc/audisp/plugins.d/laurel.conf
     fi
 }
+
+main() {
+    getMachineInfo
+    getRunningServices
+    sshConfigSetUp
+    auditdSetUp
+}
+
+main
