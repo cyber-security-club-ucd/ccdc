@@ -76,7 +76,7 @@ getRunningServices() {
     sudo ss -plnt >> $HOME/sop/running/openPorts.txt
     sudo ss -plnu >> $HOME/sop/running/openPorts.txt
 
-    sudo nmap -p- localhost -On $HOME/sop/running/localNmapScan.txt
+    sudo nmap -p- localhost -oN $HOME/sop/running/localNmapScan.txt
 }
 
 sshConfigSetUp() {
@@ -153,13 +153,13 @@ laurelSetUp() {
         source $HOME/.bashrc
     fi
 
-    if git clone https://github.com/threathunters-io/laurel.git $HOME/sop/auditdRules/; then
+    if git clone https://github.com/threathunters-io/laurel.git $HOME/sop/auditdRules/laurel; then
         echo "Successfully cloned in laurel"
     else
         echo "git clone of laurel failed"
     fi
 
-    cd $HOME/sop/auditdRules/laurel
+    cd $HOME/sop/auditdRules/laurel/laurel
 
     cargo build --release
     sudo install -m755 target/release/laurel /usr/local/sbin/laurel
