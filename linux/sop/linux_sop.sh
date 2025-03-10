@@ -13,7 +13,8 @@ installTools() {
 
     # Install tools and audits using distro specific package manager
     if [[ $ID == "debian" || $ID == "ubuntu" ]]; then
-        apt install git clang libacl1-dev vim nmap iproute2 curl
+        apt-get update
+        apt-get install git clang libacl1-dev vim nmap iproute2 curl
     elif [[ $ID == "fedora" || $ID_LIKE == "fedora" || $ID == "centos" || $ID == "rocky" || $ID == "almalinux" ]]; then
         dnf install git clang libacl-devel vim nmap iproute2 curl
     elif [[ $ID == "alpine" ]]; then
@@ -50,25 +51,25 @@ getMachineInfo() {
     echo -e "Ram on computer = $ram \n"
     echo -e "Disk on computer = $disk \n"
 
-    echo -e "operating system = $os \n" >> ~/sop/machineInfo.txt
-    echo -e "Hostname = $host \n" >> ~/sop/machineInfo.txt
-    echo -e "Distro = $distro \n" >> ~/sop/machineInfo.txt
-    echo -e "Ram on computer = $ram \n" >> ~/sop/machineInfo.txt
-    echo -e "Disk on computer = $disk \n" >> ~/sop/machineInfo.txt
+    echo -e "operating system = $os \n" >> $HOME/sop/machineInfo.txt
+    echo -e "Hostname = $host \n" >> $HOME/sop/machineInfo.txt
+    echo -e "Distro = $distro \n" >> $HOME/sop/machineInfo.txt
+    echo -e "Ram on computer = $ram \n" >> $HOME/sop/machineInfo.txt
+    echo -e "Disk on computer = $disk \n" >> $HOME/sop/machineInfo.txt
 
-    echo -e "IP address = $curr_ip \n" >> ~/sop/ipAddress.txt
+    echo -e "IP address = $curr_ip \n" >> $HOME/sop/ipAddress.txt
 }
 
 getRunningServices() {
-    mkdir -p ~/sop/running
+    mkdir -p $HOME/sop/running
 
-    systemctl --type=service --state=running >> ~/sop/running/runningServices.txt
-    systemctl list-unit-files --state=enabled >> ~/sop/running/enabledServices.txt
+    systemctl --type=service --state=running >> $HOME/sop/running/runningServices.txt
+    systemctl list-unit-files --state=enabled >> $HOME/sop/running/enabledServices.txt
 
-    ss -plnt >> ~/sop/running/openPorts.txt
-    ss -plnu >> ~/sop/running/openPorts.txt
+    ss -plnt >> $HOME/sop/running/openPorts.txt
+    ss -plnu >> $HOME/sop/running/openPorts.txt
 
-    nmap -p- localhost >> ~/sop/running/localNmapScan.txt
+    nmap -p- localhost -On $HOME/sop/running/localNmapScan.txt
 }
 
 sshConfigSetUp() {
@@ -92,8 +93,8 @@ sshConfigSetUp() {
 auditdSetUp() {
     source /etc/os-release
 
-    mkdir -p ~/sop/auditdRules
-    cd ~/sop/auditdRules
+    mkdir -p $HOME/sop/auditdRules
+    cd $HOME/sop/auditdRules
 
     installAuditd
     configureAuditdRules
@@ -125,7 +126,7 @@ configureAuditdRules() {
     wget https://raw.githubusercontent.com/Neo23x0/auditd/refs/heads/master/audit.rules -O audit.rules
 
     # Check this reg ex, it should find max_log_file line irregardless of spaces around equal sight (\s*) and current value ([0-9]\+)
-    sed -E F-i "s/^max_log_file\s*=\s*[0-9]\+/max_log_file=100/" audit.rules
+    sed -E -i "s/^max_log_file\s*=\s*[0-9]\+/max_log_file=100/" audit.rules
     # Comment of this line by putting # in front
     sed -i "s/^-a always,exclude -F msgtype=CWD/# -a always,exclude -F msgtype=CWD" audit.rules
     echo "-a exit,always -S execve -k task" >> audit.rules
@@ -142,16 +143,16 @@ laurelSetUp() {
     # Rust already installed if folder exists
     if [[ ! -e /root/.rustup/settings.toml ]]; then
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-        source ~/.bashrc
+        source $HOME/.bashrc
     fi
 
-    if git clone https://github.com/threathunters-io/laurel.git ~/sop/auditdRules; then
+    if git clone https://github.com/threathunters-io/laurel.git $HOME/sop/auditdRules; then
         echo "Successfully cloned in laurel"
     else
         echo "git clone of laurel failed"
     fi
 
-    cd ~/sop/auditdRules/laurel
+    cd $HOME/sop/auditdRules/laurel
 
     cargo build --release
     install -m755 target/release/laurel /usr/local/sbin/laurel
@@ -178,8 +179,8 @@ main() {
 
     installTools
 
-    mkdir -p ~/sop
-    cd ~/sop
+    mkdir -p $HOME/sop
+    cd $HOME/sop
 
     sshConfigSetUp
     auditdSetUp
