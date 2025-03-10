@@ -175,7 +175,7 @@ laurelSetUp() {
 
     sudo cp ./laurelConfig ./etc/laurel/config.toml
 
-    if [[ -d ./etc/audit/plugins.d/laurel.conf ]]; then
+    if [[ -d ./etc/audit/plugins.d ]]; then
         sudo cp ./laurelPlugin ./etc/audit/plugins.d/laurel.conf
     else
         sudo cp ./laurelPlugin ./etc/audisp/plugins.d/laurel.conf
