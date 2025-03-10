@@ -2,13 +2,28 @@
 
 mkdir -p ~/sop
 
-function isRoot() {
+isRoot() {
 	if [ "$EUID" -ne 0 ]; then
         echo not root
 		return 1
     else
         echo root
 	fi
+}
+
+installTools() {
+    source /etc/os-release
+
+    # Install tools and audits using distro specific package manager
+    if [[ $ID == "debian" || $ID == "ubuntu" ]]; then
+        apt install git clang libacl1-dev vim nmap iproute2
+    elif [[ $ID == "fedora" || $ID_LIKE == "fedora" || $ID == "centos" || $ID == "rocky" || $ID == "almalinux" ]]; then
+        dnf install git clang libacl-devel vim nmap iproute2
+    elif [[ $ID == "alpine" ]]; then
+        apk add git clang acl-dev vim nmap iproute2
+    fi
+
+    return 0
 }
 
 getMachineInfo() {
@@ -79,6 +94,7 @@ sshConfigSetUp() {
 # Got through part of logging but I think this is gonna be complex
 auditdSetUp() {
     source /etc/os-release
+
     mkdir -p ~/sop/auditdRules
     cd ~/sop/auditdRules
 
@@ -98,15 +114,12 @@ auditdSetUp() {
 installAuditd() {
     # Install tools and audits using distro specific package manager
     if [[ $ID == "debian" || $ID == "ubuntu" ]]; then
-        apt install git clang libacl1-dev
         apt install -y auditd 
         systemctl enable auditd
     elif [[ $ID == "fedora" || $ID_LIKE == "fedora" || $ID == "centos" || $ID == "rocky" || $ID == "almalinux" ]]; then
-        dnf install git clang libacl-devel
         dnf install audit
         systemctl enable auditd
     elif [[ $ID == "alpine" ]]; then
-        apk add git clang acl-dev
         apk add audit && rc-update add auditd
     fi
 }
@@ -156,10 +169,15 @@ main() {
         return 1
     fi
 
-    getMachineInfo
-    getRunningServices
+    if [[ installTools -ne 0 ]]; then
+        echo "Error when trying to install tools with package manager"
+    fi
+
     sshConfigSetUp
     auditdSetUp
+
+    getMachineInfo
+    getRunningServices
 }
 
 main
