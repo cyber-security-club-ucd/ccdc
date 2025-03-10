@@ -166,7 +166,7 @@ laurelSetUp() {
     . "$HOME/.cargo/env"
 
     cargo build --release
-    sudo install -m755 target/release/laurel /usr/local/sbin/laurel
+    sudo install -m755 ./target/release/laurel /usr/local/sbin/laurel
 
     sudo useradd --system --home-dir /var/log/laurel --create-home _laurel
 
@@ -180,7 +180,7 @@ laurelSetUp() {
     else
         sudo cp ./laurelPlugin ./etc/audisp/plugins.d/laurel.conf
     fi
-    
+
     sudo pkill -HUP auditd
 }
 
