@@ -67,11 +67,11 @@ sshConfigSetUp() {
 
     # Make ssh_config.d if it doesn't exist already
     if [[ ! -d /etc/ssh/ssh_config.d ]]; then
-        mkdir -p /etc/ssh/ssh_config.d
+        sudo mkdir -p /etc/ssh/ssh_config.d
     fi
 
-    echo "PermitRootLogin prohibit-password" >> /etc/ssh/sshd_config.d/00-custom.conf
-    echo "PermitEmptyPasswords no" >> /etc/ssh/sshd_config.d/00-custom.conf
+    echo "PermitRootLogin prohibit-password" | sudo tee -a /etc/ssh/sshd_config.d/00-custom.conf
+    echo "PermitEmptyPasswords no" | sudo tee -a /etc/ssh/sshd_config.d/00-custom.conf
 
     sudo systemctl reload ssh
 }
@@ -112,7 +112,7 @@ installAuditd() {
         sudo systemctl enable auditd
     elif [[ $ID == "alpine" ]]; then
         sudo apk add git clang acl-dev
-        sudo apk add audit && rc-update add auditd
+        sudo apk add audit && sudo rc-update add auditd
     fi
 }
 
@@ -120,9 +120,9 @@ configureAuditdRules() {
     wget https://raw.githubusercontent.com/Neo23x0/auditd/refs/heads/master/audit.rules -O audit.rules
 
     # Check this reg ex, it should find max_log_file line irregardless of spaces around equal sight (\s*) and current value ([0-9]\+)
-    sudo sed -i "s/^max_log_file\s*=\s*[0-9]\+/max_log_file=100/" audit.rules
+    sed -i "s/^max_log_file\s*=\s*[0-9]\+/max_log_file=100/" audit.rules
     # Comment of this line by putting # in front
-    sudo sed -i "s/^-a always,exclude -F msgtype=CWD/# -a always,exclude -F msgtype=CWD" audit.rules
+    sed -i "s/^-a always,exclude -F msgtype=CWD/# -a always,exclude -F msgtype=CWD" audit.rules
     echo "-a exit,always -S execve -k task" >> audit.rules
 
     # Copy configured Neo rules to master audit.rules file
@@ -133,7 +133,7 @@ configureAuditdRules() {
 
 laurelSetUp() {
     # Setting up Laurel for auditd
-    sudo curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo sh
     source ~/.bashrc
     cargo build --release
     sudo install -m755 target/release/laurel /usr/local/sbin/laurel
