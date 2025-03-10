@@ -148,7 +148,7 @@ laurelSetUp() {
     # Setting up Laurel for auditd
 
     # Rust already installed if .rustup exists
-    if [[ ! sudo -d /root/.rustup ]]; then
+    if [[ ! -d /root/.rustup ]]; then
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo sh
         source $HOME/.bashrc
     fi
