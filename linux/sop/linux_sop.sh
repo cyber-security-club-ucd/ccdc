@@ -147,8 +147,8 @@ configureAuditdRules() {
 laurelSetUp() {
     # Setting up Laurel for auditd
 
-    # Rust already installed if folder exists
-    if [[ ! -e ~/$HOME/.rustup/settings.toml ]]; then
+    # Rust already installed if .rustup exists
+    if [[ ! -d /root/.rustup ]]; then
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo sh
         source $HOME/.bashrc
     fi
@@ -160,6 +160,10 @@ laurelSetUp() {
     fi
 
     cd $HOME/sop/auditdRules/laurel
+
+    echo "curr working dir = $(pwd)"
+
+    . "$HOME/.cargo/env"
 
     cargo build --release
     sudo install -m755 target/release/laurel /usr/local/sbin/laurel
