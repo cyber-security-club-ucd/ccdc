@@ -4,10 +4,10 @@ mkdir -p ~/sop
 
 isRoot() {
 	if [ "$EUID" -ne 0 ]; then
-        echo not root
+        echo "not root"
 		return 1
     else
-        echo root
+        echo "root"
 	fi
 }
 
@@ -164,7 +164,7 @@ laurelSetUp() {
 }
 
 main() {
-    if [[ isRoot -ne 0 ]]; then
+    if [[ "$EUID" -ne 0 ]]; then
         echo "must be root to run this scripts"
         return 1
     fi
