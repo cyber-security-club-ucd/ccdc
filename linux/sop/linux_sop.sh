@@ -128,6 +128,9 @@ configureAuditdRules() {
 
 laurelSetUp() {
     # Setting up Laurel for auditd
+    git clone https://github.com/threathunters-io/laurel.git
+    cd laurel
+    
     sudo curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     source ~/.bashrc
     cargo build --release
@@ -148,6 +151,11 @@ laurelSetUp() {
 }
 
 main() {
+    if [[ isRoot -ne 0 ]]; then
+        echo "must be root to run this scripts"
+        return 1
+    fi
+
     getMachineInfo
     getRunningServices
     sshConfigSetUp
