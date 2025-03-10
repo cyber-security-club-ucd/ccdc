@@ -1,7 +1,4 @@
 #!/bin/bash
-
-mkdir -p ~/sop
-
 isRoot() {
 	if [ "$EUID" -ne 0 ]; then
         echo "not root"
@@ -16,11 +13,11 @@ installTools() {
 
     # Install tools and audits using distro specific package manager
     if [[ $ID == "debian" || $ID == "ubuntu" ]]; then
-        apt install git clang libacl1-dev vim nmap iproute2
+        apt install git clang libacl1-dev vim nmap iproute2 curl
     elif [[ $ID == "fedora" || $ID_LIKE == "fedora" || $ID == "centos" || $ID == "rocky" || $ID == "almalinux" ]]; then
-        dnf install git clang libacl-devel vim nmap iproute2
+        dnf install git clang libacl-devel vim nmap iproute2 curl
     elif [[ $ID == "alpine" ]]; then
-        apk add git clang acl-dev vim nmap iproute2
+        apk add git clang acl-dev vim nmap iproute2 curl
     fi
 
     return 0
@@ -141,11 +138,16 @@ configureAuditdRules() {
 
 laurelSetUp() {
     # Setting up Laurel for auditd
+
+    # Rust already installed if folder exists
+    if [[ ! -d /root/.rustup/settings.toml ]]; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+        source ~/.bashrc
+    fi
+
     git clone https://github.com/threathunters-io/laurel.git
     cd laurel
 
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    source ~/.bashrc
     cargo build --release
     install -m755 target/release/laurel /usr/local/sbin/laurel
 
@@ -170,6 +172,9 @@ main() {
     fi
 
     installTools
+
+    mkdir -p ~/sop
+    cd ~/sop
 
     sshConfigSetUp
     auditdSetUp
