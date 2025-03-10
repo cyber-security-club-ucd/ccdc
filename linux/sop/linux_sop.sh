@@ -16,8 +16,15 @@ installTools() {
         apt-get update
         apt-get install git clang libacl1-dev vim nmap iproute2 curl
     elif [[ $ID == "fedora" || $ID_LIKE == "fedora" || $ID == "centos" || $ID == "rocky" || $ID == "almalinux" ]]; then
-        dnf install git clang libacl-devel vim nmap iproute2 curl
+        if command -v dnf &>/dev/null; then
+            dnf update -y
+            dnf install -y git clang libacl-devel vim nmap iproute2 curl
+        elif command -v yum &>/dev/null; then
+            yum update -y
+            yum install -y git clang libacl-devel vim nmap iproute2 curl
+        fi
     elif [[ $ID == "alpine" ]]; then
+        apk update
         apk add git clang acl-dev vim nmap iproute2 curl
     fi
 
