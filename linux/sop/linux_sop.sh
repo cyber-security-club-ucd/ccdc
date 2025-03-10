@@ -28,8 +28,8 @@ getMachineInfo() {
     curr_ip=$(ip addr show)
 
     # If machine doesn't have ip addr tool installed
-    if [[ -z "$IP" ]]; then 
-        IP=$(ifconfig)
+    if [[ -z "$curr_ip" ]]; then 
+        curr_ip=$(ifconfig)
     fi
 
     host=$(hostname)
@@ -125,7 +125,7 @@ configureAuditdRules() {
     wget https://raw.githubusercontent.com/Neo23x0/auditd/refs/heads/master/audit.rules -O audit.rules
 
     # Check this reg ex, it should find max_log_file line irregardless of spaces around equal sight (\s*) and current value ([0-9]\+)
-    sed -i "s/^max_log_file\s*=\s*[0-9]\+/max_log_file=100/" audit.rules
+    sed -E F-i "s/^max_log_file\s*=\s*[0-9]\+/max_log_file=100/" audit.rules
     # Comment of this line by putting # in front
     sed -i "s/^-a always,exclude -F msgtype=CWD/# -a always,exclude -F msgtype=CWD" audit.rules
     echo "-a exit,always -S execve -k task" >> audit.rules
@@ -145,8 +145,13 @@ laurelSetUp() {
         source ~/.bashrc
     fi
 
-    git clone https://github.com/threathunters-io/laurel.git
-    cd laurel
+    if git clone https://github.com/threathunters-io/laurel.git ~/sop/auditdRules; then
+        echo "Successfully cloned in laurel"
+    else
+        echo "git clone of laurel failed"
+    fi
+
+    cd ~/sop/auditdRules/laurel
 
     cargo build --release
     install -m755 target/release/laurel /usr/local/sbin/laurel
