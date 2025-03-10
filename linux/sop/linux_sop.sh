@@ -140,7 +140,7 @@ laurelSetUp() {
     # Setting up Laurel for auditd
 
     # Rust already installed if folder exists
-    if [[ ! -d /root/.rustup/settings.toml ]]; then
+    if [[ ! -e /root/.rustup/settings.toml ]]; then
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
         source ~/.bashrc
     fi
