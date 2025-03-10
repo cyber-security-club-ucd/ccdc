@@ -169,9 +169,7 @@ main() {
         return 1
     fi
 
-    if [[ installTools -ne 0 ]]; then
-        echo "Error when trying to install tools with package manager"
-    fi
+    installTools
 
     sshConfigSetUp
     auditdSetUp
