@@ -148,7 +148,7 @@ laurelSetUp() {
     # Setting up Laurel for auditd
 
     # Rust already installed if folder exists
-    if [[ ! -e /root/.rustup/settings.toml ]]; then
+    if [[ ! -e ~/$HOME/.rustup/settings.toml ]]; then
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo sh
         source $HOME/.bashrc
     fi
@@ -159,7 +159,7 @@ laurelSetUp() {
         echo "git clone of laurel failed"
     fi
 
-    cd $HOME/sop/auditdRules/laurel/laurel
+    cd $HOME/sop/auditdRules/laurel
 
     cargo build --release
     sudo install -m755 target/release/laurel /usr/local/sbin/laurel
