@@ -180,6 +180,8 @@ laurelSetUp() {
     else
         sudo cp ./laurelPlugin ./etc/audisp/plugins.d/laurel.conf
     fi
+    
+    sudo pkill -HUP auditd
 }
 
 main() {
