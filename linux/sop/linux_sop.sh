@@ -133,7 +133,7 @@ configureAuditdRules() {
     wget https://raw.githubusercontent.com/Neo23x0/auditd/refs/heads/master/audit.rules -O audit.rules
 
     # Check this reg ex, it should find max_log_file line irregardless of spaces around equal sight (\s*) and current value ([0-9]\+)
-    sudo sed -E -i "s/^max_log_file\s*=\s*[0-9]\+/max_log_file=100/" audit.rules
+    sudo sed -E -i "s/^max_log_file\s*=\s*[0-9]\+/max_log_file=100/" /etc/audit/auditd.conf
     # Comment of this line by putting # in front
     sudo sed -i "s/^-a always,exclude -F msgtype=CWD/# -a always,exclude -F msgtype=CWD" audit.rules
     echo "-a exit,always -S execve -k task" >> audit.rules
@@ -173,12 +173,12 @@ laurelSetUp() {
     wget https://raw.githubusercontent.com/threathunters-io/laurel/refs/heads/master/etc/laurel/config.toml -O laurelConfig
     wget https://raw.githubusercontent.com/threathunters-io/laurel/refs/heads/master/etc/audit/plugins.d/laurel.conf -O laurelPlugin
 
-    sudo cp ./laurelConfig /etc/laurel/config.toml
+    sudo cp ./laurelConfig ./etc/laurel/config.toml
 
-    if [[ -d /etc/audit/plugins.d/laurel.conf ]]; then
-        sudo cp ./laurelPlugin /etc/audit/plugins.d/laurel.conf
+    if [[ -d ./etc/audit/plugins.d/laurel.conf ]]; then
+        sudo cp ./laurelPlugin ./etc/audit/plugins.d/laurel.conf
     else
-        sudo cp ./laurelPlugin /etc/audisp/plugins.d/laurel.conf
+        sudo cp ./laurelPlugin ./etc/audisp/plugins.d/laurel.conf
     fi
 }
 
