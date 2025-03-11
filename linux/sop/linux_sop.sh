@@ -213,7 +213,7 @@ setUpAnsibleUser() {
     echo ""
     done
 
-    sudo adduser --disabled-password --gecos "" ansible
+    sudo useradd -m ansible
     echo "ansible:$password" | sudo chpasswd
     echo "ansbile user created"
 
