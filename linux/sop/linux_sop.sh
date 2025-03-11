@@ -14,18 +14,18 @@ installTools() {
     # Install tools and audits using distro specific package manager
     if [[ $ID == "debian" || $ID == "ubuntu" ]]; then
         sudo apt-get update
-        sudo apt-get install -y git clang libacl1-dev vim nmap curl
+        sudo apt-get install -y git clang libacl1-dev vim nmap curl wget
     elif [[ $ID == "fedora" || $ID_LIKE == "fedora" || $ID == "centos" || $ID == "rocky" || $ID == "almalinux" ]]; then
         if command -v dnf &>/dev/null; then
             sudo dnf update -y
-            sudo dnf install -y git clang libacl-devel vim nmap curl
+            sudo dnf install -y git clang libacl-devel vim nmap curl wget
         elif command -v yum &>/dev/null; then
             sudo yum update -y # This is taking kind of a while
-            sudo yum install -y git clang libacl-devel vim nmap curl
+            sudo yum install -y git clang libacl-devel vim nmap curl wget
         fi
     elif [[ $ID == "alpine" ]]; then
         sudo apk update
-        sudo apk add git clang acl-dev vim nmap curl
+        sudo apk add git clang acl-dev vim nmap curl wget
     fi
 
     return 0
