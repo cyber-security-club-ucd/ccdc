@@ -194,6 +194,38 @@ laurelSetUp() {
     sudo pkill -HUP auditd
 }
 
+setUpAnsibleUser() {
+    read -s -p "give ansible user password: " password
+    echo -e ""
+    read -p "confirm ansible user password " confirmed
+    count=0
+    while [[ $password != $confirmed ]]; do
+        echo -e "passwords did not match try again\n"
+        ((count++))
+        if [[ $count -gt 2 ]]; then
+            echo "Too many failed ansible passwords, just do it on your own"
+            return -1
+        fi
+    read -s -p "give ansible user password: " password
+    echo -e ""
+    read -p "confirm ansible user password " confirmed
+    done
+
+    sudo adduser --disabled-password --gecos "" ansible
+    echo "ansible:$password" | sudo chpasswd
+    echo "ansbile user created"
+
+    source /etc/os-release
+
+    # Install tools and audits using distro specific package manager
+    if [[ $ID == "debian" || $ID == "ubuntu" ]]; then
+        sudo usermod -aG sudo ansible
+    else
+        sudo usermod -aG wheel ansible
+    fi
+    echo "ansible user added to sudo/wheel group"
+}
+
 main() {
     installTools
 
@@ -201,6 +233,7 @@ main() {
     cd $HOME/sop
 
     sshConfigSetUp
+    setUpAnsibleUser
     auditdSetUp
 
     getMachineInfo
