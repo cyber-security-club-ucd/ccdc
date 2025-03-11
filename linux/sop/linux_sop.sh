@@ -201,7 +201,7 @@ laurelSetUp() {
 setUpAnsibleUser() {
     if id "ansible" &>/dev/null; then
         echo "User 'ansible' already exists. Exiting."
-        exit 0
+        return 1
     fi
 
     read -s -p "give ansible user password: " password
