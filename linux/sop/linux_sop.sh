@@ -68,8 +68,8 @@ getMachineInfo() {
 }
 
 getRunningServices() {
-    if [[ -d $HOME/sop ]]; then
-        rm -rf $HOME/sop
+    if [[ -d $HOME/sop/running ]]; then
+        rm -rf $HOME/sop/running
     fi
 
     mkdir -p $HOME/sop/running
