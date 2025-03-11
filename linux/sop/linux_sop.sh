@@ -61,13 +61,17 @@ getMachineInfo() {
     echo -e "operating system = $os \n" | tee -a $HOME/sop/machineInfo.txt
     echo -e "Hostname = $host \n" | tee -a $HOME/sop/machineInfo.txt
     echo -e "Distro = $distro \n" | tee -a $HOME/sop/machineInfo.txt
-    echo -e "Ram on computer = $ram \n" | tee -a $HOME/sop/machineInfo.txt
-    echo -e "Disk on computer = $disk \n" | tee -a $HOME/sop/machineInfo.txt
+    echo -e "Ram on computer:\n $ram \n" | tee -a $HOME/sop/machineInfo.txt
+    echo -e "Disk on computer:\n $disk \n" | tee -a $HOME/sop/machineInfo.txt
 
     echo -e "IP address = $curr_ip \n" | tee -a $HOME/sop/ipAddress.txt
 }
 
 getRunningServices() {
+    if [[ -d $HOME/sop ]]; then
+        rm -rf $HOME/sop
+    fi
+
     mkdir -p $HOME/sop/running
 
     sudo systemctl --type=service --state=running | tee -a $HOME/sop/running/runningServices.txt
@@ -230,16 +234,16 @@ setUpAnsibleUser() {
 
 main() {
     installTools
+    sshConfigSetUp
+    getMachineInfo
+    getRunningServices
+    setUpAnsibleUser
 
     mkdir -p $HOME/sop
     cd $HOME/sop
 
-    sshConfigSetUp
-    setUpAnsibleUser
+    # Longest running function (laurel especially takes a while and it doesn't seem to be working quite right for some reason still)
     auditdSetUp
-
-    getMachineInfo
-    getRunningServices
 }
 
 main
