@@ -50,31 +50,31 @@ getMachineInfo() {
     ram=$(free -h)
     disk=$(df -h)
 
-    echo -e "operating system = $os \n"
-    echo -e "Hostname = $host \n"
-    echo -e "Distro = $distro \n"
-    echo -e "IP address = $curr_ip \n"
+    # echo -e "operating system = $os \n"
+    # echo -e "Hostname = $host \n"
+    # echo -e "Distro = $distro \n"
+    # echo -e "IP address = $curr_ip \n"
 
-    echo -e "Ram on computer = $ram \n"
-    echo -e "Disk on computer = $disk \n"
+    # echo -e "Ram on computer = $ram \n"
+    # echo -e "Disk on computer = $disk \n"
 
-    echo -e "operating system = $os \n" >> $HOME/sop/machineInfo.txt
-    echo -e "Hostname = $host \n" >> $HOME/sop/machineInfo.txt
-    echo -e "Distro = $distro \n" >> $HOME/sop/machineInfo.txt
-    echo -e "Ram on computer = $ram \n" >> $HOME/sop/machineInfo.txt
-    echo -e "Disk on computer = $disk \n" >> $HOME/sop/machineInfo.txt
+    echo -e "operating system = $os \n" | tee -a $HOME/sop/machineInfo.txt
+    echo -e "Hostname = $host \n" | tee -a $HOME/sop/machineInfo.txt
+    echo -e "Distro = $distro \n" | tee -a $HOME/sop/machineInfo.txt
+    echo -e "Ram on computer = $ram \n" | tee -a $HOME/sop/machineInfo.txt
+    echo -e "Disk on computer = $disk \n" | tee -a $HOME/sop/machineInfo.txt
 
-    echo -e "IP address = $curr_ip \n" >> $HOME/sop/ipAddress.txt
+    echo -e "IP address = $curr_ip \n" | tee -a $HOME/sop/ipAddress.txt
 }
 
 getRunningServices() {
     mkdir -p $HOME/sop/running
 
-    sudo systemctl --type=service --state=running >> $HOME/sop/running/runningServices.txt
-    sudo systemctl list-unit-files --state=enabled >> $HOME/sop/running/enabledServices.txt
+    sudo systemctl --type=service --state=running | tee -a $HOME/sop/running/runningServices.txt
+    sudo systemctl list-unit-files --state=enabled | tee -a $HOME/sop/running/enabledServices.txt
 
-    sudo ss -plnt >> $HOME/sop/running/openPorts.txt
-    sudo ss -plnu >> $HOME/sop/running/openPorts.txt
+    sudo ss -plnt | tee -a $HOME/sop/running/openPorts.txt
+    sudo ss -plnu | tee -a $HOME/sop/running/openPorts.txt
 
     sudo nmap -p- localhost -oN $HOME/sop/running/localNmapScan.txt
 }
@@ -132,11 +132,23 @@ installAuditd() {
 configureAuditdRules() {
     wget https://raw.githubusercontent.com/Neo23x0/auditd/refs/heads/master/audit.rules -O audit.rules
 
-    # Check this reg ex, it should find max_log_file line irregardless of spaces around equal sight (\s*) and current value ([0-9]\+)
-    sudo sed -E -i "s/^max_log_file\s*=\s*[0-9]\+/max_log_file=100/" /etc/audit/auditd.conf
-    # Comment of this line by putting # in front
-    sed -i "s/^-a always,exclude -F msgtype=CWD/# -a always,exclude -F msgtype=CWD" audit.rules
-    echo "-a exit,always -S execve -k task" >> audit.rules
+    # Just delete the prev max_log_line and exho in a new one rather than trying to replace it
+    sudo sed -i '/^max_log_file\s*=/d' /etc/audit/auditd.conf
+    echo 'max_log_file = 100' | sudo tee -a /etc/audit/auditd.conf  
+
+    # # If it has a max_log_file line use sed to change it
+    # if grep -q '^max_log_file' /etc/audit/auditd.conf; then
+    #     # Check this reg ex, it should find max_log_file line irregardless of spaces around equal sight (\s*) and current value ([0-9]\+)
+    #     sudo sed -E -i 's/^max_log_file\s*=\s*[0-9]+/max_log_file = 100/' /etc/audit/auditd.conf
+    # else
+    #     # If it doesn't have this line just echo it in
+    #     echo 'max_log_file = 100' | sudo tee -a /etc/audit/auditd.conf
+    # fi
+
+
+    # Comment out this line by putting # in front
+    sed -i 's|^-a always,exclude -F msgtype=CWD|#&|' audit.rules
+    echo "-a exit,always -S execve -k task" | tee -a audit.rules
 
     # Copy configured Neo rules to master audit.rules file
     sudo cp ./audit.rules /etc/audit/rules.d/audit.rules
@@ -160,8 +172,6 @@ laurelSetUp() {
     fi
 
     cd $HOME/sop/auditdRules/laurel
-
-    echo "curr working dir = $(pwd)"
 
     . "$HOME/.cargo/env"
 
