@@ -197,7 +197,7 @@ laurelSetUp() {
 setUpAnsibleUser() {
     read -s -p "give ansible user password: " password
     echo -e ""
-    read -p "confirm ansible user password " confirmed
+    read -s -p "confirm ansible user password " confirmed
     count=0
     while [[ $password != $confirmed ]]; do
         echo -e "passwords did not match try again\n"
@@ -208,7 +208,7 @@ setUpAnsibleUser() {
         fi
     read -s -p "give ansible user password: " password
     echo -e ""
-    read -p "confirm ansible user password " confirmed
+    read -s -p "confirm ansible user password " confirmed
     done
 
     sudo adduser --disabled-password --gecos "" ansible
