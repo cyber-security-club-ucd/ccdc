@@ -239,9 +239,7 @@ setUpAnsibleUser() {
 
 essentialFoldersBackup() {
     mkdir -p $HOME/sop/backups
-
-    backup_targets="/etc /var /home"
-    zip -r $HOME/sop/backups/backup-initial.zip /etc /var /home
+    sudo zip -r $HOME/sop/backups/backup-initial.zip /etc /var /home
 }
 
 
@@ -252,15 +250,15 @@ dbBackup() {
     echo -e "For postgres databases you will be reprompted for a password for each database you are dumping making copy paste the best method for this"
     echo ""
     # Try to make mysql backup
-    mysqldump -u root -p -A -R -E --triggers --single-transaction > $HOME/sop/backups/mysql_backup.sql
+    sudo mysqldump -u root -p -A -R -E --triggers --single-transaction > $HOME/sop/backups/mysql_backup.sql
 
     #Try to make postgres backup
-    
+
     # note if this is getting too much create the file .pgpass in home (~/) directory with the following line:
     # "localhost:5432:*:postgres:<password>"
     # This will make it so psql doesn't prompt for password each time
 
-    pg_dumpall -U postgres -W -f $HOME/sop/backups/postgres_backup.sql
+    sudo pg_dumpall -U postgres -W -f $HOME/sop/backups/postgres_backup.sql
 
     # Restore with:
     # mysql -u username -p < mysql_backup.sql
