@@ -252,7 +252,7 @@ dbBackup() {
     echo -e "For postgres databases you will be reprompted for a password for each database you are dumping making copy paste the best method for this"
     echo ""
     # Try to make mysql backup
-    mysqldump -A -u root -p > $HOME/sop/backups/mysql_backup.sql
+    mysqldump -u root -p -A -R -E --triggers --single-transaction > $HOME/sop/backups/mysql_backup.sql
 
     #Try to make postgres backup
     pg_dumpall -U postgres -W -f $HOME/sop/backups/postgres_backup.sql
