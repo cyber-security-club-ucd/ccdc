@@ -250,6 +250,7 @@ dbBackup() {
     echo -e "For postgres databases you will be reprompted for a password for each database you are dumping making copy paste the best method for this"
     echo ""
     # Try to make mysql backup
+    echo "Enter mySQL root user password: "
     sudo mysqldump -u root -p -A -R -E --triggers --single-transaction > $HOME/sop/backups/mysql_backup.sql
 
     #Try to make postgres backup
@@ -258,6 +259,7 @@ dbBackup() {
     # "localhost:5432:*:postgres:<password>"
     # This will make it so psql doesn't prompt for password each time
 
+    echo "Enter postgreSQL postgres user password: "
     sudo pg_dumpall -U postgres -W -f $HOME/sop/backups/postgres_backup.sql
 
     # Restore with:
