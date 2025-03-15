@@ -95,6 +95,11 @@ function downloadTools {
     Start-Process powershell {
         .\PingCastle\PingCastle.exe --healthcheck
     }
+
+    #   curl wazuh agent
+    Invoke-WebRequest https://packages.wazuh.com/4.x/windows/wazuh-agent-4.11.1-1.msi -OutFile "wazuh-agent-4.11.1-1.msi"
+    .\wazuh-agent-4.11.1-1.msi
+    # Invoke-WebRequest 
 }
 
 # Import the STIG GPOs
