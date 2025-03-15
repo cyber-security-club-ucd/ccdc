@@ -14,14 +14,14 @@ installTools() {
     # Install tools and audits using distro specific package manager
     if [[ $ID == "debian" || $ID == "ubuntu" ]]; then
         sudo apt-get update
-        sudo apt-get install -y git clang libacl1-dev vim nmap curl wget
+        sudo apt-get install -y git clang libacl1-dev vim nmap curl wget zip
     elif [[ $ID == "fedora" || $ID_LIKE == "fedora" || $ID == "centos" || $ID == "rocky" || $ID == "almalinux" ]]; then
         if command -v dnf &>/dev/null; then
             sudo dnf update -y
-            sudo dnf install -y git clang libacl-devel vim nmap curl wget
+            sudo dnf install -y git clang libacl-devel vim nmap curl wget zip
         elif command -v yum &>/dev/null; then
             sudo yum update -y # This is taking kind of a while
-            sudo yum install -y git clang libacl-devel vim nmap curl wget
+            sudo yum install -y git clang libacl-devel vim nmap curl wget zip
         fi
     elif [[ $ID == "alpine" ]]; then
         sudo apk update
@@ -216,10 +216,10 @@ setUpAnsibleUser() {
             echo "Too many failed ansible passwords, just do it on your own"
             return -1
         fi
-    read -s -p "give ansible user password: " password
-    echo ""
-    read -s -p "confirm ansible user password " confirmed
-    echo ""
+        read -s -p "give ansible user password: " password
+        echo ""
+        read -s -p "confirm ansible user password " confirmed
+        echo ""
     done
 
     sudo useradd -m ansible
@@ -237,15 +237,49 @@ setUpAnsibleUser() {
     echo "ansible user added to sudo/wheel group"
 }
 
+essentialFoldersBackup() {
+    mkdir -p $HOME/sop/backups
+
+    backup_targets="/etc /var /home"
+    zip -r $HOME/sop/backups/backup-initial.zip /etc /var /home
+}
+
+
+dbBackup() {
+    mkdir -p $HOME/sop/backups
+    # Assumes you are running either postgres or mysql on a machine, but not both
+    echo -e "Enter default password to login to mysql / postgres DB if it hasn't been changed yet"
+    echo -e "For postgres databases you will be reprompted for a password for each database you are dumping making copy paste the best method for this"
+    echo ""
+    # Try to make mysql backup
+    mysqldump -A -u root -p > $HOME/sop/backups/mysql_backup.sql
+
+    #Try to make postgres backup
+    pg_dumpall -U postgres -W -f $HOME/sop/backups/postgres_backup.sql
+
+    # Restore with:
+    # mysql -u username -p < mysql_backup.sql
+    # OR
+    # psql -U postgres -f postgres_backup.sql
+}
+
+backup() {
+    essentialFoldersBackup
+    dbBackup
+}
+
 main() {
+    mkdir -p $HOME/sop
+
     installTools
     sshConfigSetUp
     getMachineInfo
     getRunningServices
     setUpAnsibleUser
 
-    mkdir -p $HOME/sop
     cd $HOME/sop
+
+    backup # New function might break things
 
     # Longest running function (laurel especially takes a while and it doesn't seem to be working quite right for some reason still)
     auditdSetUp

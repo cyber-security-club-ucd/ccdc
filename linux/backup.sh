@@ -7,6 +7,7 @@ fi
 backup_time=$(TZ=America/Los_Angeles date +"%Y%m%d-%H%M%S")
 backup_dir=backup.$backup_time
 
+# Does this not just make a directory and then delete it?
 mkdir $backup_dir
 cleanup() {
     rm -rf $backup_dir
