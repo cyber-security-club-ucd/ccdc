@@ -25,7 +25,7 @@ installTools() {
         fi
     elif [[ $ID == "alpine" ]]; then
         sudo apk update
-        sudo apk add git clang acl-dev vim nmap curl wget
+        sudo apk add git clang acl-dev vim nmap curl wget zip
     fi
 
     return 0
@@ -255,6 +255,11 @@ dbBackup() {
     mysqldump -u root -p -A -R -E --triggers --single-transaction > $HOME/sop/backups/mysql_backup.sql
 
     #Try to make postgres backup
+    
+    # note if this is getting too much create the file .pgpass in home (~/) directory with the following line:
+    # "localhost:5432:*:postgres:<password>"
+    # This will make it so psql doesn't prompt for password each time
+
     pg_dumpall -U postgres -W -f $HOME/sop/backups/postgres_backup.sql
 
     # Restore with:
