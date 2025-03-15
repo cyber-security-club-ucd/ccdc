@@ -270,6 +270,14 @@ backup() {
     dbBackup
 }
 
+run_pspy() {
+    local output_file="$HOME/sop/running/pspy.txt"
+    chmod +x ./sop/pspy64s
+    # Run pspy in the background and redirect output to a file
+    ./sop/pspy64s > "$output_file" 2>&1 &
+    echo "pspy is running in the background with PID: $!"
+}
+
 main() {
     mkdir -p $HOME/sop
 
@@ -278,6 +286,7 @@ main() {
     getMachineInfo
     getRunningServices
     setUpAnsibleUser
+    run_pspy
 
     cd $HOME/sop
 
