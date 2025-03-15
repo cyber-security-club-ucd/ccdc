@@ -267,7 +267,6 @@ dbBackup() {
 }
 
 backup() {
-    essentialFoldersBackup
     dbBackup
 }
 
