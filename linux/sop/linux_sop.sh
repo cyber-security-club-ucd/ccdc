@@ -272,9 +272,10 @@ backup() {
 
 run_pspy() {
     local output_file="$HOME/sop/running/pspy.txt"
-    chmod +x ./sop/pspy64s
+    local pspy_file="$HOME/ccdc/linux/pspy64s"
+    chmod +x "$pspy_file"
     # Run pspy in the background and redirect output to a file
-    ./sop/pspy64s > "$output_file" 2>&1 &
+    "$pspy_file" > "$output_file" 2>&1 &
     echo "pspy is running in the background with PID: $!"
 }
 
