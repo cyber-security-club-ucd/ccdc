@@ -58,6 +58,11 @@ function hardening {
     # Disable SMBv1
     Set-SmbServerConfiguration -EnableSMB1Protocol $false
     Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol
+
+    # Zerologon
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" /v FullSecureChannelProtection /t REG_DWORD /d 1 /f
+
+    
 }
 
 # Download, setup, and run needed security tools
