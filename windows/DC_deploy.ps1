@@ -99,7 +99,7 @@ function downloadTools {
     #   curl wazuh agent
     Invoke-WebRequest https://packages.wazuh.com/4.x/windows/wazuh-agent-4.11.1-1.msi -OutFile "wazuh-agent-4.11.1-1.msi"
     .\wazuh-agent-4.11.1-1.msi
-    # Invoke-WebRequest 
+    Invoke-WebRequest https://raw.githubusercontent.com/cyber-security-club-ucd/ccdc/refs/heads/main/windows/ossec.txt -OutFile "ossec.txt"
 }
 
 # Import the STIG GPOs
