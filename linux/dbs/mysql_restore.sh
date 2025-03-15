@@ -5,7 +5,7 @@ DB_USER="root"
 BACKUP_FILE="$HOME/sop/backups/mysql_backup.sql"
 
 # Restore MySQL database (assumes no password prompt)
-mysql -u "$DB_USER" -p < "$BACKUP_FILE"
+sudo mysql -u "$DB_USER" -p < "$BACKUP_FILE"
 
 mkdir -p $HOME/restore_logs
 
