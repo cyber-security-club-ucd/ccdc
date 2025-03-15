@@ -58,6 +58,11 @@ function hardening {
     # Disable SMBv1
     Set-SmbServerConfiguration -EnableSMB1Protocol $false
     Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol
+
+    # Zerologon
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" /v FullSecureChannelProtection /t REG_DWORD /d 1 /f
+
+    
 }
 
 # Download, setup, and run needed security tools
@@ -95,6 +100,11 @@ function downloadTools {
     Start-Process powershell {
         .\PingCastle\PingCastle.exe --healthcheck
     }
+
+    #   curl wazuh agent
+    Invoke-WebRequest https://packages.wazuh.com/4.x/windows/wazuh-agent-4.11.1-1.msi -OutFile "wazuh-agent-4.11.1-1.msi"
+    .\wazuh-agent-4.11.1-1.msi
+    Invoke-WebRequest https://raw.githubusercontent.com/cyber-security-club-ucd/ccdc/refs/heads/main/windows/ossec.txt -OutFile "ossec.txt"
 }
 
 # Import the STIG GPOs
