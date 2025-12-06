@@ -22,29 +22,6 @@ $currentPrincipal = New-Object Security.Principal.WindowsPrincipal( [Security.Pr
 # Function to rotate domain user passwords by calling the password generator API
 function pwRotate {
     Set-PSReadlineOption -HistorySaveStyle SaveNothing
-
-    $userList = @()
-
-    # API Call to get a secure password
-((get-aduser -F *).sid.value).foreach{
-        $objSID = New-Object System.Security.Principal.SecurityIdentifier($psitem)
-        $objUser = $objSID.Translate([System.Security.Principal.NTAccount])
-        $username = ($objUser.Value -split "\\")[1] # Quotient only uses username with no domain
-	
-        Write-Host "Changing $username"
-	
-        $api = Invoke-RestMethod -Uri "https://api.genratr.com/?length=16&lowercase&uppercase&numbers" -Method Get
-        $p = ConvertTo-SecureString -String $api.password -AsPlainText -Force
-        Set-ADAccountPassword -identity $psitem -newpassword $p -Reset # Do we need reset?
-
-    
-        $userList += [PSCustomObject]@{username = $username; password = $api.password }
-    }
-
-
-    # Generate .csv for password changes
-    $userList | ConvertTo-Csv -NoTypeInformation | ForEach-Object { $_ -replace '"', '' } | Out-File ".\balls.csv"
-
     Write-Host "Reset the password for Administrator so you don't get locked out"
     $p = Read-Host -AsSecureString
     Set-ADAccountPassword -identity Administrator -newpassword $p
@@ -71,7 +48,7 @@ function downloadTools {
     $ProgressPreference = 'SilentlyContinue'
 
     #   curl nmap
-    Invoke-WebRequest https://nmap.org/dist/nmap-7.94-setup.exe -OutFile "nmap-setup.exe"
+    Invoke-WebRequest https://nmap.org/dist/nmap-7.98-setup.exe -OutFile "nmap-setup.exe"
     ./nmap-setup.exe
 
     #   curl malwarebytes
@@ -101,21 +78,17 @@ function downloadTools {
         .\PingCastle\PingCastle.exe --healthcheck
     }
 
-    #   curl wazuh agent
-    Invoke-WebRequest https://packages.wazuh.com/4.x/windows/wazuh-agent-4.11.1-1.msi -OutFile "wazuh-agent-4.11.1-1.msi"
-    .\wazuh-agent-4.11.1-1.msi
-    Invoke-WebRequest https://raw.githubusercontent.com/cyber-security-club-ucd/ccdc/refs/heads/main/windows/ossec.txt -OutFile "ossec.txt"
 }
 
 # Import the STIG GPOs
 function GPOs {
     #   curl STIG GPOs
-    Invoke-WebRequest https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_STIG_GPO_Package_January_2025.zip -OutFile "C:\Temp\STIG_GPO.zip"
+    Invoke-WebRequest dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_STIG_GPO_Package_October_2025.zip -OutFile "C:\Temp\STIG_GPO.zip"
     Expand-Archive -Path "C:\Temp\STIG_GPO.zip" -DestinationPath "C:\Temp\STIG\" -Force
 
     # Update these everytime a new STIG drops!
-    $inputFile = "DISA_AllGPO_Import_Jan2025.csv"
-    $findString = "C:\Jan25 DISA STIG GPO Package 0117"
+    $inputFile = "DISA_AllGPO_Import_Oct2025.csv"
+    $findString = "C:\Nov25 DISA STIG GPO Package 1111"
 
     # Import the GPOs
     Set-Location "C:\Temp\STIG\Support Files"
