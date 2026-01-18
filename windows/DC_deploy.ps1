@@ -38,8 +38,6 @@ function hardening {
 
     # Zerologon
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" /v FullSecureChannelProtection /t REG_DWORD /d 1 /f
-
-    
 }
 
 # Download, setup, and run needed security tools
@@ -114,12 +112,41 @@ function GPOs {
     .\DISA_GPO_Baseline_Import.ps1
 }
 
+function dns_backup {
+    # There is no reinventing the wheel with this one
+    $secureBackupPath = "C:\Users\Administrator\Desktop\dns"
+
+    if (!(Test-Path -Path $secureBackupPath)) {
+        New-Item -Path $secureBackupPath -ItemType Directory -Force
+    }
+
+    # Get all DNS zones on the server
+    $zones = Get-DnsServerZone
+    
+    foreach ($zone in $zones) {
+        $zoneName = $zone.ZoneName
+        $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+        $backupFileName = "${zoneName}_backup_$timestamp.dns"
+        $tempFilePath = "C:\Windows\System32\dns\$backupFileName"
+        $finalFilePath = Join-Path $secureBackupPath $backupFileName
+
+        Export-DnsServerZone -Name $zoneName -FileName $backupFileName
+
+        Move-Item -Path $tempFilePath -Destination $finalFilePath -Force
+
+        Write-Host "Backed up zone '$zoneName' to '$finalFilePath'"
+    }
+
+    Write-Host "All DNS zones backed up successfully."
+}
+
 # Run everything function
 function all {
     pwRotate
     hardening
     downloadTools
     GPOs
+    dns_backup
 }
 
 # Menu to pick which hardening function you want to do
@@ -132,15 +159,17 @@ function mainMenu {
     Write-Host "'hardening' to run hardening commands"
     Write-Host "'download' to download security tools"
     Write-Host "'gpo' to import the STIG GPOs"
+    Write-Host "'dns' to backup dns"
     Write-Host "'all' to run all the above steps (first run)"
 
     $Choice = Read-Host -Prompt '>>'
-    switch($Choice){
-        'pwrotate' {pwRotate}
-        'hardening' {hardening}
-        'download' {downloadTools}
-        'gpo' {GPOs}
-        'all' {all}
+    switch ($Choice) {
+        'pwrotate' { pwRotate }
+        'hardening' { hardening }
+        'download' { downloadTools }
+        'gpo' { GPOs }
+        'dns' { dns_backup }
+        'all' { all }
     }
     Write-Host "Put in a valid word"
     mainMenu
