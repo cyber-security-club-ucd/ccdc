@@ -29,6 +29,8 @@ function pwRotate {
 
 # Stuff for general Windows hardening
 function hardening {
+    Write-Host "Doing General Hardening..."
+
     # Enable firewall
     Set-NetFirewallProfile -Profile Domain, Public, Private -Enabled True
 
@@ -38,10 +40,14 @@ function hardening {
 
     # Zerologon
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" /v FullSecureChannelProtection /t REG_DWORD /d 1 /f
+
+    # Start compmgmt
+    Start-Process compmgmt.msc
 }
 
 # Download, setup, and run needed security tools
 function downloadTools {
+    Write-Host "Downloading and running scanning tools..."
     # Turn off progress bar to speed up downloads
     $ProgressPreference = 'SilentlyContinue'
 
@@ -66,7 +72,7 @@ function downloadTools {
 
     #   setup sysmon
     Set-Location .\Sysinternals
-    Invoke-WebRequest https://raw.githubusercontent.com/SwiftOnSecurity/sysmon-config/refs/heads/master/sysmonconfig-export.xml -OutFile config.xml
+    Invoke-WebRequest https://raw.githubusercontent.com/cyber-security-club-ucd/ccdc/refs/heads/main/windows/sysmonconfig.xml -OutFile config.xml
     .\sysmon.exe -accepteula -i config.xml
 
     #   curl pingcastle (USE AN OLDER VERSION ON SERVER 2016!!)
@@ -78,41 +84,69 @@ function downloadTools {
 
 }
 
-# Import the STIG GPOs
+# Import the Security Compliance Toolkit GPOs
 function GPOs {
-    #   curl STIG GPOs
-    Invoke-WebRequest dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_STIG_GPO_Package_October_2025.zip -OutFile "C:\Temp\STIG_GPO.zip"
-    Expand-Archive -Path "C:\Temp\STIG_GPO.zip" -DestinationPath "C:\Temp\STIG\" -Force
+    Write-Host "Importing GPOs..."
 
-    # Update these everytime a new STIG drops!
-    $inputFile = "DISA_AllGPO_Import_Oct2025.csv"
-    $findString = "C:\Nov25 DISA STIG GPO Package 1111"
+    # Get LGPO
+    Invoke-WebRequest https://download.microsoft.com/download/8/5/c/85c25433-a1b0-4ffa-9429-7e023e7da8d8/LGPO.zip -OutFile "LGPO.zip"
+    Expand-Archive -Path LGPO.zip -DestinationPath .\ -Force
 
-    # Import the GPOs
-    Set-Location "C:\Temp\STIG\Support Files"
-    
-    # Modify the import CSV
-    $data = Import-Csv -Path $inputFile
+    # Get the Windows version information
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem
 
-    foreach ($row in $data) {
-        foreach ($property in $row.PSObject.Properties) {
-            if ($property.Value -is [string]) {
-                $property.Value = $property.Value -replace [regex]::Escape($findString), "C:\Temp\STIG"
+    # Extract the version and build number
+    $version = $os.Version
+    $caption = $os.Caption
+
+    # Check and print the server version
+    if ($caption -like "*Server*") {
+        switch -Wildcard ($version) {
+            "10.0.14393*" { 
+                Write-Host "Detected Version: Server 2016"
+                Invoke-WebRequest https://download.microsoft.com/download/8/5/c/85c25433-a1b0-4ffa-9429-7e023e7da8d8/Windows%2010%20Version%201607%20and%20Windows%20Server%202016%20Security%20Baseline.zip -OutFile "Baseline.zip" 
+                Expand-Archive -Path Baseline.zip -DestinationPath .\ -Force
+                Move-Item LGPO_30\LGPO.exe .\Windows-10-RS1-and-Server-2016-Security-Baseline\Local_Script\Tools\
+                Set-Location .\Windows-10-RS1-and-Server-2016-Security-Baseline\Local_Script
+                .\Domain_Controller_Install.cmd
+                
             }
+            "10.0.17763*" { 
+                Write-Host "Detected Version: Server 2019"
+                Invoke-WebRequest https://download.microsoft.com/download/8/5/c/85c25433-a1b0-4ffa-9429-7e023e7da8d8/Windows%2010%20Version%201809%20and%20Windows%20Server%202019%20Security%20Baseline.zip -OutFile "Baseline.zip" 
+                Expand-Archive -Path Baseline.zip -DestinationPath .\Baseline-2019\ -Force
+                Move-Item LGPO_30\LGPO.exe .\Baseline-2019\Local_Script\Tools\
+                Set-Location .\Baseline-2019\Local_Script\
+                .\BaselineLocalInstall.ps1  -WS2019DomainControlle
+            }
+            "10.0.20348*" { 
+                Write-Host "Detected Version: Server 2022"
+                Invoke-WebRequest https://download.microsoft.com/download/8/5/c/85c25433-a1b0-4ffa-9429-7e023e7da8d8/Windows%20Server%202022%20Security%20Baseline.zip -OutFile "Baseline.zip"
+                Expand-Archive -Path Baseline.zip -DestinationPath .\ -Force
+                Move-Item LGPO_30\LGPO.exe ".\Windows Server-2022-Security-Baseline-FINAL\Scripts\Tools\"
+                Set-Location ".\Windows Server-2022-Security-Baseline-FINAL\Scripts\"
+                .\Baseline-ADImport.ps1
+            }
+            "10.0.22000*" { 
+                Write-Host "Detected Version: Server 2025"
+                Invoke-WebRequest https://download.microsoft.com/download/8/5/c/85c25433-a1b0-4ffa-9429-7e023e7da8d8/Windows%20Server%202025%20Security%20Baseline.zip -OutFile "Baseline.zip" 
+                Expand-Archive -Path Baseline.zip -DestinationPath .\ -Force
+                Move-Item LGPO_30\LGPO.exe "Windows Server 2025 Security Baseline - 2506\Scripts\Tools"
+                Set-Location ".\Windows Server 2025 Security Baseline - 2506\Scripts"
+                .\Baseline-ADImport.ps1
+            }
+            default { Write-Host "Unknown or unsupported server version" }
         }
+    } else {
+        Write-Host "Not a Windows Server OS."
     }
 
-    $data | Export-Csv -Path $inputFile -NoTypeInformation
+    
 
-    # Edit the migtable manually even though it's XML but it's so painful to do with PowerShell
-    Write-Host "The workgroup is $env:userdomain"
-    .\importtable.migtable
-
-    # Run the GPO import script
-    .\DISA_GPO_Baseline_Import.ps1
 }
 
 function dns_backup {
+    Write-Host "Backing up DNS..."
     # There is no reinventing the wheel with this one
     $secureBackupPath = "C:\Users\Administrator\Desktop\dns"
 
