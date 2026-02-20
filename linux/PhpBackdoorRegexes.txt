@@ -1,0 +1,9 @@
+passthru
+shell_exec
+system
+phpinfo
+edoced_46esab
+chmod
+mkdir
+`[a-zA-Z 0-9_/\\\\]+`
+eval

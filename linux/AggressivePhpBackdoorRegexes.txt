@@ -1,0 +1,4 @@
+base64_decode
+fopen
+fclose
+readfile
