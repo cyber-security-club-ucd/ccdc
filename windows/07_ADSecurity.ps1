@@ -70,7 +70,7 @@ if ($asrepUsers) {
     $asrepUsers | Select-Object SamAccountName, Enabled, PasswordLastSet, LastLogonDate |
         Format-Table | Out-String | Write-Host -ForegroundColor Red
     $asrepUsers | Export-Csv -Path $asrepLog -NoTypeInformation
-    Write-INFO "Vulnerable accounts saved → $asrepLog"
+    Write-INFO "Vulnerable accounts saved -> $asrepLog"
     Write-Host ""
 
     foreach ($u in $asrepUsers) {
@@ -136,7 +136,7 @@ if ($kerberoastable) {
     Write-Host ""
     $kerberoastable | Select-Object SamAccountName, ServicePrincipalName, PasswordLastSet, Description |
         Export-Csv -Path $kerbLog -NoTypeInformation
-    Write-INFO "Kerberoastable accounts saved → $kerbLog"
+    Write-INFO "Kerberoastable accounts saved -> $kerbLog"
     Write-Host ""
     Write-WARN "ACTION REQUIRED: Ensure ALL SPN accounts have 25+ character random passwords!"
     Write-WARN "If an SPN is not needed, remove it: Set-ADUser <user> -ServicePrincipalNames @{Remove='<SPN>'}"
@@ -199,7 +199,7 @@ foreach ($grp in $privGroups) {
         foreach ($m in $members) {
             $privData += [PSCustomObject]@{ Group = $grp; Member = $m.SamAccountName; Type = $m.objectClass }
             $color = if ($grp -in @("Domain Admins","Enterprise Admins","Schema Admins")) { "Red" } else { "Yellow" }
-            Write-Host ("  {0,-30} → {1} [{2}]" -f $grp, $m.SamAccountName, $m.objectClass) -ForegroundColor $color
+            Write-Host ("  {0,-30} -> {1} [{2}]" -f $grp, $m.SamAccountName, $m.objectClass) -ForegroundColor $color
         }
     } catch {
         Write-INFO "  $grp — could not enumerate (may not exist)"
@@ -207,7 +207,7 @@ foreach ($grp in $privGroups) {
 }
 
 $privData | Export-Csv -Path $privLog -NoTypeInformation
-Write-INFO "Privileged group members → $privLog"
+Write-INFO "Privileged group members -> $privLog"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 5. DELEGATION ABUSE CHECK
@@ -233,7 +233,7 @@ $constrained = Get-ADObject -Filter { msDS-AllowedToDelegateTo -like "*" } `
 if ($constrained) {
     Write-WARN "Constrained delegation configured on:"
     foreach ($c in $constrained) {
-        Write-Host "  $($c.distinguishedName)  → $($c.'msDS-AllowedToDelegateTo' -join ', ')" -ForegroundColor Yellow
+        Write-Host "  $($c.distinguishedName)  -> $($c.'msDS-AllowedToDelegateTo' -join ', ')" -ForegroundColor Yellow
     }
     Write-INFO "Verify these delegations are expected for your services"
 }

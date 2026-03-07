@@ -77,7 +77,7 @@ if ($phpExe) {
 
         # Backup php.ini first
         Copy-Item $phpIniPath "$LogDir\php.ini.backup" -Force
-        Write-OK "php.ini backed up → $LogDir\php.ini.backup"
+        Write-OK "php.ini backed up -> $LogDir\php.ini.backup"
 
         # Check dangerous settings
         $phpChecks = @(
@@ -203,7 +203,7 @@ if ($fzService) {
     foreach ($fzPath in $filezillaConfig) {
         if (Test-Path $fzPath) {
             Copy-Item $fzPath "$LogDir\FileZilla_config.xml.backup" -Force
-            Write-OK "FileZilla config backed up → $LogDir\FileZilla_config.xml.backup"
+            Write-OK "FileZilla config backed up -> $LogDir\FileZilla_config.xml.backup"
 
             $fzContent = Get-Content $fzPath -Raw
             # Check for anonymous FTP
@@ -284,11 +284,11 @@ foreach ($root in $configSearchPaths) {
 }
 
 $configFindings | Export-Csv -Path $configReport -NoTypeInformation
-Write-OK "$($configFindings.Count) config files found → $configReport"
+Write-OK "$($configFindings.Count) config files found -> $configReport"
 Write-WARN "Review these files for hardcoded passwords and sensitive settings"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 6. Running Process → Service Correlation
+# 6. Running Process -> Service Correlation
 # ─────────────────────────────────────────────────────────────────────────────
 Write-STEP "Unknown Process / Service Inventory"
 

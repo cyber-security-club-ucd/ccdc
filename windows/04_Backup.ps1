@@ -43,7 +43,7 @@ function Backup-Path {
         New-Item -ItemType Directory -Path $Dest -Force | Out-Null
         try {
             Copy-Item -Path $Source -Destination $Dest -Recurse -Force -ErrorAction Stop
-            Write-OK "$Label → $Dest"
+            Write-OK "$Label -> $Dest"
         } catch {
             Write-WARN "$Label backup partial: $_"
         }
@@ -73,7 +73,7 @@ if ($dnsService) { # Check if the server has the DNS role installed before tryin
                 Get-DnsServerResourceRecord -ZoneName $zone.ZoneName -ErrorAction SilentlyContinue |
                     Select-Object HostName, RecordType, RecordData, TimeToLive |
                     Export-Csv -Path $zoneFile -NoTypeInformation
-                Write-OK "DNS zone: $($zone.ZoneName) → $zoneFile"
+                Write-OK "DNS zone: $($zone.ZoneName) -> $zoneFile"
             } catch {
                 Write-WARN "Could not export zone $($zone.ZoneName): $_"
             }
@@ -125,7 +125,7 @@ if ($iisService) { # Check if IIS is installed before trying to back it up
         Import-Module WebAdministration -ErrorAction Stop
         Get-Website | Select-Object Name, State, PhysicalPath, Bindings |
             Export-Csv -Path "$iisBackupDir\IIS_Sites.csv" -NoTypeInformation
-        Write-OK "IIS sites list → $iisBackupDir\IIS_Sites.csv"
+        Write-OK "IIS sites list -> $iisBackupDir\IIS_Sites.csv"
     } catch {
         Write-INFO "WebAdministration module not available for site list"
     }
@@ -148,7 +148,7 @@ $shares = Get-SmbShare | Where-Object {
 if ($shares) {
     $shareBackupDir = "$BackupRoot\Shares"
     foreach ($share in $shares) {
-        Write-INFO "Backing up share: $($share.Name) → $($share.Path)"
+        Write-INFO "Backing up share: $($share.Name) -> $($share.Path)"
         $shareDest = "$shareBackupDir\$($share.Name)"
         Backup-Path $share.Path $shareDest "Share: $($share.Name)"
     }
@@ -191,7 +191,7 @@ foreach ($key in $regPaths.GetEnumerator()) {
 }
 
 $allRegEntries | Export-Csv -Path "$regBackupDir\RegRunKeys_Baseline.csv" -NoTypeInformation
-Write-OK "Registry Run keys baseline → $regBackupDir\RegRunKeys_Baseline.csv"
+Write-OK "Registry Run keys baseline -> $regBackupDir\RegRunKeys_Baseline.csv"
 Write-INFO "($($allRegEntries.Count) entries recorded — compare later to detect added persistence)"
 
 # Also export full reg hives as .reg files for restore
@@ -218,7 +218,7 @@ Get-ScheduledTask | Select-Object TaskName, TaskPath, State,
     Export-Csv -Path $taskLog -NoTypeInformation
 
 $nonMsTasks = Get-ScheduledTask | Where-Object { $_.TaskPath -notlike "\Microsoft\*" }
-Write-OK "Scheduled tasks baseline → $taskLog"
+Write-OK "Scheduled tasks baseline -> $taskLog"
 Write-INFO "$($nonMsTasks.Count) non-Microsoft tasks (review these for red team persistence)"
 
 if ($nonMsTasks) {
@@ -238,7 +238,7 @@ $svcLog = "$BackupRoot\ServiceConfigs.csv"
 Get-WmiObject Win32_Service |
     Select-Object Name, DisplayName, State, StartMode, PathName, StartName, Description |
     Export-Csv -Path $svcLog -NoTypeInformation
-Write-OK "Service configs → $svcLog"
+Write-OK "Service configs -> $svcLog"
 
 # ── 7. Active Directory Backup (if DC) ───────────────────────────────────────
 Write-STEP "Active Directory Backup"
@@ -262,14 +262,14 @@ if ($isDC) {
         Get-ADUser -Filter * -Properties * |
             Select-Object SamAccountName, Enabled, LastLogonDate, PasswordNeverExpires, MemberOf, Description |
             Export-Csv -Path "$adBackupDir\ADUsers.csv" -NoTypeInformation
-        Write-OK "AD users → $adBackupDir\ADUsers.csv"
+        Write-OK "AD users -> $adBackupDir\ADUsers.csv"
 
         # Export AD groups
         Get-ADGroup -Filter * -Properties Members |
             Select-Object Name, GroupCategory, GroupScope,
                 @{N="Members"; E={ ($_.Members | ForEach-Object { ($_ -split ',')[0] -replace 'CN=' }) -join "; " }} |
             Export-Csv -Path "$adBackupDir\ADGroups.csv" -NoTypeInformation
-        Write-OK "AD groups → $adBackupDir\ADGroups.csv"
+        Write-OK "AD groups -> $adBackupDir\ADGroups.csv"
 
     } catch {
         Write-WARN "AD backup failed: $_"

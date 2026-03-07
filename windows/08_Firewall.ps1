@@ -49,7 +49,7 @@ Set-NetFirewallProfile -Profile Domain,Public,Private `
     -LogAllowed True -LogBlocked True `
     -LogFileName "%SystemRoot%\System32\LogFiles\Firewall\pfirewall.log" `
     -LogMaxSizeKilobytes 4096
-Write-OK "Firewall logging enabled → %SystemRoot%\System32\LogFiles\Firewall\pfirewall.log"
+Write-OK "Firewall logging enabled -> %SystemRoot%\System32\LogFiles\Firewall\pfirewall.log"
 
 # ── 2. Block Dangerous Ports ─────────────────────────────────────────────────
 Write-STEP "Blocking Dangerous Inbound Ports"
