@@ -36,16 +36,40 @@ foreach ($Profile in $Profiles) {
     }
 }
 
-# Use the log path from the Domain profile (they typically all share the same file)
-$LogPath = $OriginalState["Domain"].LogFileName
-$StartTimeUTC = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss")
+# FIX #2 & #3: Find a valid log path by checking all profiles instead of hardcoding "Domain".
+# The default unconfigured value is "-", so we skip that.
+$LogPath = $null
+foreach ($ProfileName in @("Domain", "Private", "Public")) {
+    $CandidatePath = $OriginalState[$ProfileName].LogFileName
+    if ($CandidatePath -and $CandidatePath -ne "-") {
+        $LogPath = $CandidatePath
+        break
+    }
+}
+
+# If no profile has a configured path, fall back to the Windows default.
+if (-not $LogPath -or $LogPath -eq "-") {
+    $LogPath = "$env:SystemRoot\System32\LogFiles\Firewall\pfirewall.log"
+    Write-Host "[*] No custom log path configured. Using default: $LogPath" -ForegroundColor Cyan
+}
+
+# FIX #3: Validate the log path is reachable BEFORE starting the timed capture.
+$LogDir = Split-Path $LogPath -Parent
+if (-not (Test-Path $LogDir)) {
+    Write-Host "[-] Firewall log directory does not exist: $LogDir" -ForegroundColor Red
+    Write-Host "[-] Ensure the Windows Firewall service is running." -ForegroundColor Red
+    exit
+}
+
+# FIX #1: Use LOCAL time for the start timestamp to match pfirewall.log's format.
+$StartTimeLocal = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
 
 Write-Host "[*] Local IPs: $($LocalIPs -join ', ')" -ForegroundColor Cyan
+Write-Host "[*] Log file: $LogPath" -ForegroundColor Cyan
 Write-Host "[*] Enabling success logging (20MB limit) for $Duration seconds..." -ForegroundColor Yellow
 
 try {
     # 3. Apply Temporary Logging Settings
-    # We set Max Size to 20480 KB (20 MB) and enable success logging (LogAllowed = True)
     Set-NetFirewallProfile -Profile Domain,Private,Public -LogAllowed True -LogMaxSizeKilobytes 20480
     
     Write-Host "[*] Capturing traffic. DO NOT close this window. (Ctrl+C is safe)..." -ForegroundColor Yellow
@@ -53,7 +77,6 @@ try {
 
 } finally {
     # 4. GUARANTEED RESTORATION
-    # This block executes even if you press Ctrl+C during the Start-Sleep!
     Write-Host "[*] Restoring original Windows Firewall logging settings..." -ForegroundColor Cyan
     foreach ($Profile in $Profiles) {
         $Old = $OriginalState[$Profile.Name]
@@ -66,7 +89,6 @@ try {
 Write-Host "[*] Processing captured data..." -ForegroundColor Cyan
 $TempLog = "$env:TEMP\pfirewall_temp.log"
 
-# Copy the file so we don't fight the Firewall service for read locks
 Copy-Item -Path $LogPath -Destination $TempLog -Force -ErrorAction SilentlyContinue
 
 if (-not (Test-Path $TempLog)) {
@@ -82,7 +104,6 @@ $Outgoing = @{}
 $LogLines = Get-Content $TempLog -ErrorAction SilentlyContinue
 
 foreach ($Line in $LogLines) {
-    # Skip headers and empty lines
     if ($Line.StartsWith("#") -or [string]::IsNullOrWhiteSpace($Line)) { continue }
 
     $Parts = $Line -split '\s+'
@@ -97,23 +118,16 @@ foreach ($Line in $LogLines) {
     $DstPort    = $Parts[7]
     $TcpFlags   = $Parts[9]
 
-    # Only look at allowed traffic that happened AFTER our script started
-    if ($Action -eq "ALLOW" -and $LogTimeStr -ge $StartTimeUTC) {
+    # FIX #1: Compare against local time ($StartTimeLocal) instead of UTC.
+    if ($Action -eq "ALLOW" -and $LogTimeStr -ge $StartTimeLocal) {
         
-        # Filter for TCP connection initiation (SYN flag) or UDP traffic
-        # Windows logs SYN as 'S'. We want 'S' and NOT 'A' (ACK). UDP logs flags as '-'
         if (($Protocol -eq "TCP" -and $TcpFlags -match "S" -and $TcpFlags -notmatch "A") -or ($Protocol -eq "UDP")) {
             
-            # Determine Direction
             if ($LocalIPs -contains $SrcIP) {
-                # OUTGOING: Source is us, Destination is them
                 $Key = "$DstIP:$DstPort/$Protocol"
                 $Outgoing[$Key]++
             } elseif ($LocalIPs -contains $DstIP) {
-                # INCOMING: Source is them, Destination is us (LocalPort)
-                # Heuristic: Ignore likely ephemeral return UDP ports (>=32768)
                 if ($Protocol -eq "UDP" -and [int]$DstPort -ge 32768) { continue }
-                
                 $Key = "$SrcIP:$DstPort/$Protocol"
                 $Incoming[$Key]++
             }
@@ -121,7 +135,6 @@ foreach ($Line in $LogLines) {
     }
 }
 
-# Clean up the temp file
 Remove-Item $TempLog -Force -ErrorAction SilentlyContinue
 
 # 6. Apply Threshold and Output
