@@ -124,11 +124,11 @@ foreach ($Line in $LogLines) {
         if (($Protocol -eq "TCP" -and $TcpFlags -match "S" -and $TcpFlags -notmatch "A") -or ($Protocol -eq "UDP")) {
             
             if ($LocalIPs -contains $SrcIP) {
-                $Key = "$DstIP:$DstPort/$Protocol"
+                $Key = "${DstIP}:$DstPort/$Protocol"
                 $Outgoing[$Key]++
             } elseif ($LocalIPs -contains $DstIP) {
                 if ($Protocol -eq "UDP" -and [int]$DstPort -ge 32768) { continue }
-                $Key = "$SrcIP:$DstPort/$Protocol"
+                $Key = "${SrcIP}:$DstPort/$Protocol"
                 $Incoming[$Key]++
             }
         }
