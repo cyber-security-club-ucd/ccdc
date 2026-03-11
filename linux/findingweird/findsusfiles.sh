@@ -1,8 +1,9 @@
+#!/bin/bash
 echo
 echo Finding tarballs and executables in homedirs
 echo These files usually warrant investigation
 echo
-sudo find /home -type f \( -name "*.tar.*" -o -executable \) | tee -a prohibfilestat
+sudo find /home -type f \( -name "*.tar.*" -o -executable \) | tee prohibfilestat
 echo
 echo Finding globally-writeable files and directories - output in ./globalwritefilestat
 echo These files definitely warrant investigation
