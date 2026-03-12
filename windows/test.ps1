@@ -15,7 +15,7 @@ Ran on a test box: NO
     5. Show logged-in sessions right now
 #>
 
-# ── Colour helpers (inline so script works standalone) ──────────────────────
+# -- Colour helpers (inline so script works standalone) ----------------------
 function Write-Banner { param([string]$T,[string]$C="Cyan") $l="="*70; Write-Host "`n$l`n  $T`n$l`n" -ForegroundColor $C }
 function Write-OK     { param([string]$m) Write-Host "  [OK]   $m" -ForegroundColor Green  }
 function Write-WARN   { param([string]$m) Write-Host "  [WARN] $m" -ForegroundColor Yellow }
@@ -29,7 +29,7 @@ $Stamp  = Get-Date -Format "yyyyMMdd_HHmm"
 
 Write-Banner "USER & ADMIN AUDIT" "Cyan"
 
-# ── 1. Local Users Snapshot ─────────────────────────────────────────────────
+# -- 1. Local Users Snapshot -------------------------------------------------
 Write-STEP "Local User Snapshot" 
 
 $localUsers = Get-LocalUser | Select-Object Name, Enabled, LastLogon, PasswordExpires, PasswordLastSet, Description
@@ -39,7 +39,7 @@ $localUsers | Export-Csv -Path $snapshotPath -NoTypeInformation
 Write-INFO "User snapshot saved -> $snapshotPath" # Save the user snapshot
 Write-Host ""
 Write-Host "  Name                 Enabled   LastLogon" -ForegroundColor DarkGray
-Write-Host "  ───────────────────  ────────  ─────────────────────" -ForegroundColor DarkGray
+Write-Host "  -------------------  --------  ---------------------" -ForegroundColor DarkGray
 
 foreach ($u in $localUsers) {
     $enabledColor = if ($u.Enabled) { "White" } else { "DarkGray" } # Gray out disabled accounts
@@ -50,7 +50,7 @@ foreach ($u in $localUsers) {
 }
 # All Local Users have been listed and saved to a CSV file for review. Disabled accounts are shown in gray, and last logon times are included for quick assessment of account activity.
 
-# ── 2. Administrators Group ──────────────────────────────────────────────────
+# -- 2. Administrators Group --------------------------------------------------
 Write-STEP "Local Administrators Group"
 
 $admins = Get-LocalGroupMember -Group "Administrators" -ErrorAction SilentlyContinue
@@ -100,7 +100,7 @@ if ($suspiciousAdmins.Count -gt 0) { # If there are unexpected admins, prompt to
  
 # At this point, all unexpected admin accounts have been flagged and you have been prompted to remove them. If you chose not to remove any, make sure to review them as needed.
 
-# ── 3. Active Directory Users (if DC) ───────────────────────────────────────
+# -- 3. Active Directory Users (if DC) ---------------------------------------
 Write-STEP "Active Directory Check"
 
 
@@ -196,7 +196,7 @@ if ($isDC) {
     Write-INFO "Not a Domain Controller — skipping AD checks"
 }
 
-# ── 4. Currently Logged-In Sessions ─────────────────────────────────────────
+# -- 4. Currently Logged-In Sessions -----------------------------------------
 Write-STEP "Active Sessions Right Now"
 
 try { # Querey active sessions to see who is currently logged in.
@@ -206,7 +206,7 @@ try { # Querey active sessions to see who is currently logged in.
     Write-WARN "Could not query sessions" 
 }
 
-# ── 5. SSH Authorized Keys Hunt ──────────────────────────────────────────────
+# -- 5. SSH Authorized Keys Hunt ----------------------------------------------
 Write-STEP "SSH Authorized Keys Hunt"
 
 #Skim the common locations for SSH authorized keys and known hosts files. If you find any, check their contents to see if there are unexpected keys or hosts that could indicate a compromise.
@@ -226,7 +226,7 @@ foreach ($pattern in $keyPaths) {
 }
 if (-not $found) { Write-OK "No unexpected SSH key files found" }
 
-# ── Done ─────────────────────────────────────────────────────────────────────
+# -- Done ---------------------------------------------------------------------
 Write-Host ""
 Write-OK "User audit complete. Logs saved to $LogDir"
 Write-Host ""
