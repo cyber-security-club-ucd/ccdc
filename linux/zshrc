@@ -1,0 +1,170 @@
+# Path to your oh-my-zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
+
+ZSH_THEME="gnzh"
+
+export TERM="xterm-256color"
+
+zstyle ':omz:update' mode auto      # update automatically without asking
+
+ENABLE_CORRECTION="true"
+
+
+plugins=(z zsh-autosuggestions zsh-syntax-highlighting colorize)
+
+source $ZSH/oh-my-zsh.sh
+
+HISTFILE=~/.zsh_history
+HISTSIZE=99999999999999999
+SAVEHIST=$HISTSIZE
+
+
+if [[ $(uname) == "Linux" ]]; then
+  if [[ $(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2) == "fedora" ]]; then
+      export OS="fedora"
+  elif [[ $(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2) == "debian" ]]; then
+      export OS="debian"
+  elif [[ $(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2) == "ubuntu" ]]; then
+      export OS="debian"
+  elif [[ $(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2) == "raspbian" ]]; then
+      export OS="raspbian"
+  elif [[ $(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2) == "nixos" ]]; then
+      export OS="nixos"
+  elif [[ $(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2) == "bluefin" ]]; then
+      export OS="bluefin"
+  fi
+
+elif [[ $(uname) == 'Darwin' ]]; then
+  export OS="macos"
+else
+  echo "OS isn't Linux or Darwin"
+  cat /etc/os-release | grep "^ID=" | cut -d'=' -f2
+fi
+
+
+
+
+# # custom aliases
+alias ..='cd ..'
+alias ...='cd ../..'
+
+alias please="sudo"
+alias fucking="sudo"
+
+alias whereami="hostname" # for consistency with whoami
+alias i="hostname -I" # for consistency with whoami
+alias myname="whoami" # for consistency with hostname
+
+case $OS in
+  fedora)
+    # alias upgrade="sudo dnf5 upgrade --assumeyes;flatpak update; nix-channel --update"
+    alias upgrade="sudo dnf5 upgrade --assumeyes;flatpak update -y"
+    alias u="sudo dnf5 upgrade --assumeyes;flatpak update -y"
+    # alias upgrade="sudo dnf5 upgrade --assumeyes;flatpak update; nix-channel --update; home-manager switch"
+    #alias upgrade-all="ssh -t pc sudo dnf5 upgrade --assumeyes; upgrade" 
+
+    # alias bat='bat --theme=ansi'
+    function install() {
+      if [[ $EUID -ne 0 ]]; then
+      	sudo dnf5 install --assumeyes $@
+      else
+         dnf5 install --assumeyes $@
+      fi
+    }
+    function uninstall() {
+      if [[ $EUID -ne 0 ]]; then
+      	sudo dnf5 remove --assumeyes $@
+      else
+      	dnf5 remove --assumeyes $@
+      fi
+    }
+
+    ;;
+  raspbian)
+    if [[ $EUID -ne 0 ]]; then
+    	alias upgrade="sudo apt update && sudo apt upgrade -y"
+    else
+    	alias upgrade="apt update && apt upgrade -y"
+    fi
+    # alias bat='batcat --theme=ansi'
+    function install() {
+      if [[ $EUID -ne 0 ]]; then
+        sudo apt update
+        sudo apt install -y $@
+      else
+  apt update
+	apt install -y $@
+      fi
+    }
+    
+    ;;
+  debian)
+    if [[ $EUID -ne 0 ]]; then
+    	alias upgrade="sudo apt update && sudo apt upgrade -y"
+    else
+    	alias upgrade="apt update && apt upgrade -y"
+    fi
+    # alias bat='batcat --theme=ansi'
+    function install() {
+      if [[ $EUID -ne 0 ]]; then
+        sudo apt install -y $@
+      else
+	apt install -y $@
+      fi
+    }
+    
+    
+    ;;
+  nixos)
+    alias upgrade="nix-rebuild"
+    # NOT NIXOS-REBUILD. Turns out that's a real thing
+    # function install() {
+    #   sudo apt-get install -y $@
+    # }
+    
+    ;;
+  bluefin)
+    alias upgrade="upgrades are automatic with bluefin"
+    function install() {
+      brew install $@
+    }
+    ;;
+  macos)
+    # alias upgrade="brew update && brew upgrade && softwareupdate --install --all"
+    alias upgrade="brew update && brew upgrade"
+    alias gdu="gdu-go"
+    function install() {
+      brew install $@
+    }
+    alias python="/usr/bin/python3"
+    export PATH=$PATH:/Applications/SWI-Prolog.app/Contents/MacOS
+    ;;
+  *)
+    echo "Unknown operating system"
+    echo "OS: "
+    echo $OS
+    ;;
+esac
+
+alias reload="\rm "$ZSH_COMPDUMP";exec zsh"
+command -v lsd > /dev/null && alias ls='lsd --group-dirs first'
+command -v lsd > /dev/null && alias tree='lsd --tree'
+
+function cd {
+    if [ -z "$1" ]; then
+        builtin cd
+    else
+        builtin cd "$1"
+    fi
+    if [ $? -eq 0 ]; then
+        ls
+    fi
+}
+alias p='ping 8.8.8.8'
+alias vim='nvim'
+alias vi='nvim'
+
+function setup() {
+  sh -c "$(wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"
+  cat $HOME/.zshrc.pre-oh-my-zsh >> $HOME/.zshrc
+}
