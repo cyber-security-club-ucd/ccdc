@@ -1,14 +1,3 @@
-<# 
-Ridge Checked: Yes
-Ran on a test box: NO 
-Improvements: 
-Order of Operations:  
-1) Identify and list all potential PII data sources
-2) Define specific patterns and keywords to search for
-3) Implement file scanning logic
-4) Generate report and output findings to "C:\CCDC_Logs"
-#>
-
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
