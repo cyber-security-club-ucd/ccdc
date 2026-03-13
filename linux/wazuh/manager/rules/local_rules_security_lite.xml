@@ -1,0 +1,332 @@
+<group name="security_hardening,ccdc,">
+  <!-- Burst of failed login attempts. -->
+  <rule id="100300" level="12" frequency="6" timeframe="120">
+    <if_group>authentication_failed,</if_group>
+    <same_user />
+    <same_srcip />
+    <description>Multiple failed login attempts for the same user from the same source within 2 minutes</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <!-- Linux/Unix su to root session observed. -->
+  <rule id="100301" level="10">
+    <if_group>syslog,</if_group>
+    <match>su:|session opened for user root</match>
+    <description>Privilege escalation activity: su/session to root detected</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+  </rule>
+
+  <!-- New local/domain account creation (Windows) and useradd (Linux). -->
+  <rule id="100302" level="11">
+    <if_group>syslog,win_security_event,</if_group>
+    <match>useradd|EventID":4720|A user account was created</match>
+    <description>New account created</description>
+    <mitre>
+      <id>T1136</id>
+    </mitre>
+  </rule>
+
+  <!-- User added to sudo/wheel/admin groups. -->
+  <rule id="100303" level="12">
+    <if_group>syslog,win_security_event,</if_group>
+    <match>sudo|wheel|administrators|EventID":4728|EventID":4732|EventID":4756|added to a security-enabled</match>
+    <description>User added to privileged group (sudo/wheel/admin)</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+  </rule>
+
+  <!-- Netcat process execution from Linux audit logs or Windows process creation logs. -->
+  <rule id="100304" level="13">
+    <if_group>audit,win_security_event,</if_group>
+    <match>comm="nc"|comm="ncat"| nc.exe| ncat.exe|\\nc.exe|\\ncat.exe</match>
+    <description>Netcat execution detected</description>
+    <mitre>
+      <id>T1105</id>
+    </mitre>
+  </rule>
+
+  <!-- Critical SSH key modifications. -->
+  <rule id="100305" level="12">
+    <if_sid>550</if_sid>
+    <match>.ssh|authorized_keys</match>
+    <description>SSH key material changed in critical path</description>
+  </rule>
+
+  <!-- Cron and scheduled task related file changes. -->
+  <rule id="100306" level="10">
+    <if_sid>550</if_sid>
+    <match>/etc/cron|/var/spool/cron|\\System32\\Tasks</match>
+    <description>Cron/scheduled task configuration changed</description>
+  </rule>
+
+  <!-- Nginx/Apache config changes. -->
+  <rule id="100307" level="10">
+    <if_sid>550</if_sid>
+    <match>/etc/nginx|/etc/apache2|/etc/httpd|\\inetsrv\\config</match>
+    <description>Web server configuration changed (nginx/apache/IIS)</description>
+  </rule>
+
+  <!-- MySQL/MariaDB config changes. -->
+  <rule id="100308" level="10">
+    <if_sid>550</if_sid>
+    <match>/etc/mysql|/etc/my.cnf|mysqld</match>
+    <description>MySQL configuration changed</description>
+  </rule>
+
+  <!-- DNS config changes. -->
+  <rule id="100309" level="10">
+    <if_sid>550</if_sid>
+    <match>/etc/bind|/etc/named|/etc/resolv.conf|\\System32\\drivers\\etc\\hosts</match>
+    <description>DNS resolver/server configuration changed</description>
+  </rule>
+
+  <!-- Firewall policy/rule changes from FIM or Windows Security events. -->
+  <rule id="100310" level="11">
+    <if_group>syscheck,win_security_event,</if_group>
+    <match>/etc/firewalld|/etc/ufw|/etc/iptables|/etc/nftables.conf|EventID":4946|EventID":4947|EventID":4948|EventID":4950</match>
+    <description>Firewall rule or policy change detected</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+
+  <!-- SSH daemon configuration tampering. -->
+  <rule id="100311" level="12">
+    <if_sid>550</if_sid>
+    <match>/etc/ssh/sshd_config|/etc/ssh/sshd_config.d</match>
+    <description>SSH daemon configuration changed</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+
+  <!-- Startup/persistence script changes. -->
+  <rule id="100312" level="12">
+    <if_sid>550</if_sid>
+    <match>/etc/systemd/system|/usr/lib/systemd/system|/etc/init.d|/etc/rc.local|/etc/rc.d|/etc/profile.d</match>
+    <description>Startup persistence path changed (systemd/init/profile)</description>
+    <mitre>
+      <id>T1543</id>
+    </mitre>
+  </rule>
+
+  <!-- Kubernetes high-risk config/runtime path changes. -->
+  <rule id="100313" level="13">
+    <if_sid>550</if_sid>
+    <match>/etc/kubernetes|/var/lib/kubelet|/etc/cni/net.d|/var/lib/etcd|/etc/containerd</match>
+    <description>Kubernetes critical path changed (possible cluster compromise activity)</description>
+    <mitre>
+      <id>T1552</id>
+    </mitre>
+  </rule>
+
+  <!-- Success after a failed-login burst (possible brute-force success). -->
+  <rule id="100314" level="13" frequency="1" timeframe="300">
+    <if_group>authentication_success,</if_group>
+    <if_matched_sid>100300</if_matched_sid>
+    <same_user />
+    <same_srcip />
+    <description>Authentication succeeded after recent repeated failures for the same user from the same source</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <!-- Suspicious sudo usage aimed at spawning shells, pulling payloads, or changing auth controls. -->
+  <rule id="100315" level="12">
+    <if_group>syslog,audit,</if_group>
+    <match>sudo:|comm="sudo"</match>
+    <regex type="pcre2">COMMAND=(/bin/(ba)?sh|/usr/bin/(curl|wget|python[0-9.]*|perl|ruby)|/usr/bin/systemctl\s+(stop|disable)\s+(auditd|firewalld|ufw|sshd|ssh)|/usr/sbin/usermod|/usr/bin/chmod\s+u\+s)|/dev/tcp/|pty\.spawn|socket\.socket</regex>
+    <description>Suspicious sudo command execution detected</description>
+    <mitre>
+      <id>T1548</id>
+      <id>T1059</id>
+    </mitre>
+  </rule>
+
+  <!-- Reverse shell / C2 style execution patterns from existing syslog or audit logs. -->
+  <rule id="100316" level="13">
+    <if_group>syslog,audit,</if_group>
+    <regex type="pcre2">comm="socat"|/dev/tcp/|bash\s+-i|ncat?\s+-e|pty\.spawn|socket\.socket|perl\s+-e.*Socket|python[0-9.]*\s+-c.*(pty|socket)</regex>
+    <description>Reverse shell or interactive C2 execution pattern detected</description>
+    <mitre>
+      <id>T1059</id>
+      <id>T1071</id>
+    </mitre>
+  </rule>
+
+  <!-- Account disable/delete events. -->
+  <rule id="100317" level="11">
+    <if_group>syslog,audit,win_security_event,</if_group>
+    <match>userdel|EventID":4725|EventID":4726|A user account was disabled|A user account was deleted</match>
+    <description>Account disable or deletion detected</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+  </rule>
+
+  <!-- Password reset/change events. -->
+  <rule id="100318" level="10">
+    <if_group>syslog,audit,win_security_event,</if_group>
+    <match>passwd|chpasswd|EventID":4723|EventID":4724|An attempt was made to change an account's password|An attempt was made to reset an account's password</match>
+    <description>Password change or reset detected</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+  </rule>
+
+  <!-- High-value sudoers policy changes. -->
+  <rule id="100319" level="13">
+    <if_sid>550</if_sid>
+    <match>/etc/sudoers|/etc/sudoers.d</match>
+    <description>Sudoers policy changed</description>
+    <mitre>
+      <id>T1548</id>
+    </mitre>
+  </rule>
+
+  <!-- User and password database tampering. -->
+  <rule id="100320" level="13">
+    <if_sid>550</if_sid>
+    <match>/etc/passwd|/etc/shadow|/etc/group</match>
+    <description>Core account database file changed</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+  </rule>
+
+  <!-- Hosts file tampering. -->
+  <rule id="100321" level="11">
+    <if_sid>550</if_sid>
+    <match>/etc/hosts|\System32\drivers\etc\hosts</match>
+    <description>Hosts file changed</description>
+    <mitre>
+      <id>T1565</id>
+    </mitre>
+  </rule>
+
+  <!-- Lightweight web canary file changes. -->
+  <rule id="100322" level="10">
+    <if_sid>550</if_sid>
+    <regex type="pcre2">/var/www/html/index\.html|/var/www/html/\.htaccess|/srv/http/index\.html|/var/www/localhost/htdocs/index\.html|\\inetpub\\wwwroot\\iisstart\.htm|\\inetpub\\wwwroot\\web\.config</regex>
+    <description>Web canary file changed</description>
+    <mitre>
+      <id>T1491</id>
+    </mitre>
+  </rule>
+
+  <!-- Audit logging disable/tamper attempts. -->
+  <rule id="100323" level="13">
+    <if_group>syslog,audit,</if_group>
+    <regex type="pcre2">auditctl\s+-e\s+0|systemctl\s+(stop|disable)\s+auditd|service\s+auditd\s+stop|comm="auditctl"|auditd.*(stopped|disabled)</regex>
+    <description>Audit logging disable or tamper attempt detected</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+
+  <!-- Audit configuration file changes. -->
+  <rule id="100324" level="12">
+    <if_sid>550</if_sid>
+    <match>/etc/audit|/etc/audit/rules.d</match>
+    <description>Audit configuration changed</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+
+  <!-- Wazuh service disable/tamper detection. -->
+  <rule id="100325" level="13">
+    <if_group>syslog,windows,</if_group>
+    <regex type="pcre2">wazuh-agent|wazuh-manager|ossec-agent|WazuhSvc|ossec.*(stopped|disabled)|Service Control Manager.*(WazuhSvc|ossec)</regex>
+    <description>Wazuh service tamper or state change detected</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+
+  <!-- Critical service reload/restart/stop/disable activity. -->
+  <rule id="100326" level="11">
+    <if_group>syslog,audit,windows,</if_group>
+    <regex type="pcre2">systemctl\s+(reload|restart|stop|disable)\s+(sshd|ssh|nginx|apache2|httpd|mysql|mysqld|mariadb|ufw|firewalld|nftables|auditd|wazuh-agent|wazuh-manager|ossec-agent)|service\s+(sshd|ssh|nginx|apache2|httpd|mysql|mysqld|mariadb|ufw|firewalld|auditd|wazuh-agent|wazuh-manager|ossec-agent)\s+(reload|restart|stop)|Service Control Manager.*(stopped|running|disabled).*?(WazuhSvc|MpsSvc|Dnscache|TermService)</regex>
+    <description>Critical service control action detected</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+
+  <!-- Host shutdown or reboot activity. -->
+  <rule id="100327" level="10">
+    <if_group>syslog,audit,windows,</if_group>
+    <regex type="pcre2">systemctl\s+(poweroff|reboot|halt)|shutdown(\.exe)?(\s|$)|reboot(\s|$)|poweroff(\s|$)|The Event log service was stopped|The operating system is shutting down</regex>
+    <description>System shutdown or reboot activity detected</description>
+    <mitre>
+      <id>T1529</id>
+    </mitre>
+  </rule>
+
+  <!-- Scoped webshell-like file drops in common web roots. -->
+  <rule id="100328" level="13">
+    <if_sid>550</if_sid>
+    <regex type="pcre2">(/var/www/html|/srv/http|/var/www/localhost/htdocs|\\inetpub\\wwwroot).*(shell|cmd|c99|r57|wso|upload|backdoor).*(\.php|\.phtml|\.php[0-9]?|\.asp|\.aspx|\.jsp|\.war|\.cgi|\.pl|\.sh)|(/var/www/html|/srv/http|/var/www/localhost/htdocs|\\inetpub\\wwwroot).*(\.php|\.phtml|\.php[0-9]?|\.asp|\.aspx|\.jsp|\.war|\.cgi|\.pl)$</regex>
+    <description>Suspicious script or possible webshell dropped in web root</description>
+    <mitre>
+      <id>T1505</id>
+    </mitre>
+  </rule>
+
+  <!-- Wazuh manager core configuration changed. -->
+  <rule id="100329" level="13">
+    <if_sid>550</if_sid>
+    <match>/var/ossec/etc</match>
+    <description>Wazuh manager configuration changed</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+
+  <!-- Wazuh custom rules or decoders changed. -->
+  <rule id="100330" level="13">
+    <if_sid>550</if_sid>
+    <regex type="pcre2">/var/ossec/etc/rules|/var/ossec/etc/decoders</regex>
+    <description>Wazuh rule or decoder content changed</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+
+  <!-- Shared group configuration changed (affects many agents). -->
+  <rule id="100331" level="12">
+    <if_sid>550</if_sid>
+    <match>/var/ossec/etc/shared</match>
+    <description>Wazuh shared agent group configuration changed</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+
+  <!-- Wazuh manager binaries changed. -->
+  <rule id="100332" level="13">
+    <if_sid>550</if_sid>
+    <match>/var/ossec/bin</match>
+    <description>Wazuh manager binary path changed</description>
+    <mitre>
+      <id>T1554</id>
+    </mitre>
+  </rule>
+
+  <!-- Filebeat ingest configuration changed. -->
+  <rule id="100333" level="12">
+    <if_sid>550</if_sid>
+    <match>/etc/filebeat</match>
+    <description>Filebeat configuration changed</description>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+</group>

@@ -3,6 +3,7 @@
 # Uses ripgrep (rg) for fast full-system scan if available; falls back to grep on key paths.
 
 THRESHOLD=3
+LIST_DOCS="${PII_LIST_DOCS:-0}"
 
 # Directories to skip when scanning
 EXCLUDES=(
@@ -13,15 +14,19 @@ EXCLUDES=(
     /usr/local/lib /usr/local/share /usr/local/bin
     /var/db /run/systemd /run/snapd /var/backups /var/lib/yum
     /opt/gitlab /etc/httpd/conf/magic /etc/apache2/magic
+    /root/ccdc/.git /root/ccdc/WRCCDC\ Inject\ Templates
 )
 
+# Regex for paths that are usually noisy/non-PII in CCDC workspaces
+NOISE_PATH_RE='(/\.git/|/\.svn/|/node_modules/|/vendor/|/dist/|/build/|/\.cache/|/\.pytest_cache/|/\.mypy_cache/|/\.next/|/\.terraform/|/\.vscode/|/\.idea/|/WRCCDC Inject Templates/|/backdoor/|/\.mysqlaudit/|\.pack$|\.idx$|\.ps1$|\.sh$|\.py$|\.js$|\.ts$|\.go$|\.c$|\.h$|\.rb$|\.php$|\.java$|\.class$|\.jar$|\.sql$|\.xml$|\.yml$|\.yaml$|\.json$|\.log$)'
+
 # Regex patterns
-SSN_RE='[0-9]{3}-[0-9]{2}-[0-9]{4}'
-EMAIL_RE='[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}'
-PHONE_RE='(\([0-9]{3}\) |[0-9]{3}[ -])[0-9]{3}[ -]?[0-9]{4}'
-CC_RE='(?:\d{4}[- ]?){3}\d{4}'
-VRN_RE='[A-Z]{1,2}[0-9]{1,2} ?[A-Z]{1,3} ?[0-9]{1,4}'
-ADDR_RE='[0-9]+\s+[A-Za-z]+\s+[A-Za-z]+'
+SSN_RE='\b[0-9]{3}-[0-9]{2}-[0-9]{4}\b'
+EMAIL_RE='\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}\b'
+PHONE_RE='\b(?:\+1[ -]?)?(?:\([2-9][0-9]{2}\)|[2-9][0-9]{2})[ -]?[0-9]{3}[ -]?[0-9]{4}\b'
+CC_RE='\b(?:[0-9]{4}[- ]?){3}[0-9]{4}\b'
+# Tightened UK-style VRN format to reduce random token matches.
+VRN_RE='\b[A-Z]{2}[0-9]{2}\s?[A-Z]{3}\b'
 COMBINED_RE="${SSN_RE}|${EMAIL_RE}|${PHONE_RE}|${CC_RE}|${VRN_RE}"
 
 # Document extensions to flag
@@ -34,6 +39,7 @@ DOC_NAMES=(
 
 find_docs() {
     local path="$1"
+    [ "$LIST_DOCS" = "1" ] || return 0
     local name_args=()
     for ext in "${DOC_NAMES[@]}"; do
         name_args+=( "-o" "-name" "$ext" )
@@ -48,7 +54,8 @@ rg_search_path() {
         excl+=( "--glob=!${ex}" "--glob=!${ex}/**" )
     done
     mapfile -t hits < <(rg "${excl[@]}" --no-follow -P "${COMBINED_RE}" -o -c "$path" 2>/dev/null \
-        | awk -v t="$THRESHOLD" -F: '$2+0 > t && $1 !~ /\.(h|rb|c|js|js\.map|py|pem|po)$/ {print $1}')
+        | awk -v t="$THRESHOLD" -F: '$2+0 > t {print $1}' \
+        | grep -Ev "$NOISE_PATH_RE")
     for f in "${hits[@]}"; do
         echo "  [FILE] $f"
         rg "${excl[@]}" --no-follow -P "$SSN_RE"   -o "$f" 2>/dev/null | head -3 | sed 's/^/    [SSN] /'
@@ -61,12 +68,11 @@ rg_search_path() {
 
 grep_search_path() {
     local path="$1"
-    grep -rElo  "$SSN_RE"   "$path" 2>/dev/null | sed 's/^/  [SSN] /'
-    grep -rElo  "$EMAIL_RE" "$path" 2>/dev/null | sed 's/^/  [Email] /'
-    grep -rElo  "$PHONE_RE" "$path" 2>/dev/null | sed 's/^/  [Phone] /'
-    grep -rPlo  "$CC_RE"    "$path" 2>/dev/null | sed 's/^/  [CC] /'
-    grep -rElo  "$VRN_RE"   "$path" 2>/dev/null | sed 's/^/  [VRN] /'
-    grep -rElo  "$ADDR_RE"  "$path" 2>/dev/null | sed 's/^/  [Addr] /'
+    grep -rElo  "$SSN_RE"   "$path" 2>/dev/null | grep -Ev "$NOISE_PATH_RE" | sed 's/^/  [SSN] /'
+    grep -rElo  "$EMAIL_RE" "$path" 2>/dev/null | grep -Ev "$NOISE_PATH_RE" | sed 's/^/  [Email] /'
+    grep -rElo  "$PHONE_RE" "$path" 2>/dev/null | grep -Ev "$NOISE_PATH_RE" | sed 's/^/  [Phone] /'
+    grep -rPlo  "$CC_RE"    "$path" 2>/dev/null | grep -Ev "$NOISE_PATH_RE" | sed 's/^/  [CC] /'
+    grep -rElo  "$VRN_RE"   "$path" 2>/dev/null | grep -Ev "$NOISE_PATH_RE" | sed 's/^/  [VRN] /'
 }
 
 search() {

@@ -76,11 +76,9 @@ ldap_restore() {
 
 # ─── MySQL ────────────────────────────────────────────────────────────────────
 mysql_backup() {
-    read -rp "MySQL host: " MYSQL_HOST
     read -rp "MySQL user: " MYSQL_USER
     read -rsp "MySQL password: " MYSQL_PASSWORD; echo
-    read -rp "Backup output path [default: $DEFAULT_BACKUP_DIR/mysql]: " DATA_PATH
-    DATA_PATH="${DATA_PATH:-$DEFAULT_BACKUP_DIR/mysql}"
+    DATA_PATH="$DEFAULT_BACKUP_DIR/mysql"
 
     mkdir -p "$DATA_PATH"
     chown root:root "$DATA_PATH"
@@ -90,15 +88,16 @@ mysql_backup() {
     sep
     echo "MySQL Backup"
     sep
+    echo "Using local MySQL server on this machine."
 
-    databases=$(mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" --password="$MYSQL_PASSWORD" \
+    databases=$(mysql -u "$MYSQL_USER" --password="$MYSQL_PASSWORD" \
         -e "SHOW DATABASES;" | tr -d "| " | grep -v Database)
 
     for db in $databases; do
         if [[ "$db" != "information_schema" ]] && [[ "$db" != "performance_schema" ]] \
             && [[ "$db" != "mysql" ]] && [[ "$db" != _* ]]; then
             echo "Dumping: $db"
-            mysqldump -h "$MYSQL_HOST" -u "$MYSQL_USER" --password="$MYSQL_PASSWORD" \
+            mysqldump -u "$MYSQL_USER" --password="$MYSQL_PASSWORD" \
                 --databases "$db" > "$db.sql"
             chmod 600 "$db.sql"
         fi
@@ -108,22 +107,21 @@ mysql_backup() {
 }
 
 mysql_restore() {
-    read -rp "MySQL host: " MYSQL_HOST
     read -rp "MySQL user: " MYSQL_USER
     read -rsp "MySQL password: " MYSQL_PASSWORD; echo
-    read -rp "Path containing .sql backup files [default: $DEFAULT_BACKUP_DIR/mysql]: " DATA_PATH
-    DATA_PATH="${DATA_PATH:-$DEFAULT_BACKUP_DIR/mysql}"
+    DATA_PATH="$DEFAULT_BACKUP_DIR/mysql"
 
     sep
     echo "MySQL Restore"
     sep
+    echo "Using local MySQL server on this machine."
 
     for sqlfile in "$DATA_PATH"/*.sql; do
         db=$(basename "$sqlfile" .sql)
         echo "Restoring: $db"
-        mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" --password="$MYSQL_PASSWORD" \
+        mysql -u "$MYSQL_USER" --password="$MYSQL_PASSWORD" \
             -e "CREATE DATABASE IF NOT EXISTS \`$db\`;"
-        mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" --password="$MYSQL_PASSWORD" "$db" < "$sqlfile"
+        mysql -u "$MYSQL_USER" --password="$MYSQL_PASSWORD" "$db" < "$sqlfile"
     done
 
     echo "MySQL restore complete."
@@ -131,12 +129,10 @@ mysql_restore() {
 
 # ─── PostgreSQL ───────────────────────────────────────────────────────────────
 psql_backup() {
-    read -rp "PostgreSQL host: " PSQL_HOST
     read -rp "PostgreSQL user: " PSQL_USER
     read -rsp "PostgreSQL password: " PGPASSWORD; echo
     export PGPASSWORD
-    read -rp "Backup output path [default: $DEFAULT_BACKUP_DIR/psql]: " DATA_PATH
-    DATA_PATH="${DATA_PATH:-$DEFAULT_BACKUP_DIR/psql}"
+    DATA_PATH="$DEFAULT_BACKUP_DIR/psql"
 
     mkdir -p "$DATA_PATH"
     chown root:root "$DATA_PATH"
@@ -146,8 +142,9 @@ psql_backup() {
     sep
     echo "PostgreSQL Backup"
     sep
+    echo "Using local PostgreSQL server on this machine."
 
-    psql -h "$PSQL_HOST" -U "$PSQL_USER" -t \
+    psql -U "$PSQL_USER" -t \
         -c "SELECT datname FROM pg_database WHERE datistemplate = false;" \
         | sed '/^$/d' | awk '{print $1}' > database_list.txt
 
@@ -156,7 +153,7 @@ psql_backup() {
 
     while IFS= read -r db; do
         echo "Dumping: $db"
-        pg_dump -h "$PSQL_HOST" -U "$PSQL_USER" -d "$db" > "$db.sql"
+        pg_dump -U "$PSQL_USER" -d "$db" > "$db.sql"
         chmod 600 "$db.sql"
     done < database_list.txt
 
@@ -164,23 +161,22 @@ psql_backup() {
 }
 
 psql_restore() {
-    read -rp "PostgreSQL host: " PSQL_HOST
     read -rp "PostgreSQL user: " PSQL_USER
     read -rsp "PostgreSQL password: " PGPASSWORD; echo
     export PGPASSWORD
-    read -rp "Path containing .sql backup files [default: $DEFAULT_BACKUP_DIR/psql]: " DATA_PATH
-    DATA_PATH="${DATA_PATH:-$DEFAULT_BACKUP_DIR/psql}"
+    DATA_PATH="$DEFAULT_BACKUP_DIR/psql"
 
     sep
     echo "PostgreSQL Restore"
     sep
+    echo "Using local PostgreSQL server on this machine."
 
     for sqlfile in "$DATA_PATH"/*.sql; do
         db=$(basename "$sqlfile" .sql)
         echo "Restoring: $db"
-        psql -h "$PSQL_HOST" -U "$PSQL_USER" \
+        psql -U "$PSQL_USER" \
             -c "CREATE DATABASE \"$db\";" 2>/dev/null || true
-        psql -h "$PSQL_HOST" -U "$PSQL_USER" -d "$db" < "$sqlfile"
+        psql -U "$PSQL_USER" -d "$db" < "$sqlfile"
     done
 
     echo "PostgreSQL restore complete."

@@ -4,19 +4,13 @@ HOSTNAME=$(hostname || cat /etc/hostname)
 echo -e "HOST: $HOSTNAME"
 echo "------------------"
 
-if [ "$#" -lt 1 ]; then
-    if [ -n "$AAA" ]; then
-        backup_dir="$AAA"
-    else
-        echo "Usage: $0 <backup_path>"
-        echo "Alternatively, set environment variable AAA."
-        exit 1
-    fi
-else
-    backup_dir="$1"
-fi
+DEFAULT_BACKUP_DIR="/root/.databack/initial"
+backup_dir="$DEFAULT_BACKUP_DIR"
+mkdir -p "$backup_dir"
+chown root:root "$backup_dir"
+chmod 700 "$backup_dir"
 
-if [ -n "$2" ]; then 
+if [ -n "$1" ]; then 
     quiet=true
 elif [ -n "$BBB" ]; then
     quiet=true
