@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 
 HOSTNAME=$(hostname || cat /etc/hostname)
 echo -e "HOST: $HOSTNAME"
@@ -38,14 +38,14 @@ echo_if_not_quiet "Commencing General Backup"
 sep
 # Ensure the backup directory exists
 mkdir -p "$backup_dir" && echo_if_not_quiet "Backup directory created at $backup_dir"
-chmod 600 "$backup_dir"
+chmod 700 "$backup_dir"
 sep
 
 echo_if_not_quiet "Default Firewall Backups"
 dash_sep
 firewall_backup_dir=$backup_dir/firewall_rules
-mkdir -p $firewall_backup_dir && echo_if_not_quiet "Firewall backup directory created at $firewall_backup_dir"
-chmod 600 "$firewall_backup_dir"
+mkdir -p "$firewall_backup_dir" && echo_if_not_quiet "Firewall backup directory created at $firewall_backup_dir"
+chmod 700 "$firewall_backup_dir"
 # Backup iptables rules
 if command -v iptables-save >/dev/null 2>&1; then
     echo_if_not_quiet "Backing up iptables rules..."

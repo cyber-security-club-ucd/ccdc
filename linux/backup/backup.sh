@@ -185,4 +185,10 @@ psql_restore() {
 # ─── Dispatch ─────────────────────────────────────────────────────────────────
 echo ""
 sep
-"${TYPE}_${MODE}"
+dispatch_fn="${TYPE}_${MODE}"
+if declare -F "$dispatch_fn" >/dev/null 2>&1; then
+    "$dispatch_fn"
+else
+    echo "Error: Unsupported selection ($dispatch_fn)" >&2
+    exit 1
+fi

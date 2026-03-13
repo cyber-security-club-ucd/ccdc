@@ -4,12 +4,25 @@
 if [ "$EUID" -ne 0 ]; then echo "Please run as root"; exit 1; fi
 
 RHEL(){
-    yum purge -y -q netcat nc gcc cmake make telnet
+    if command -v dnf >/dev/null ; then
+        dnf makecache -q || true
+        for pkg in netcat nc gcc cmake make telnet; do
+            dnf remove -y "$pkg" >/dev/null 2>&1 || true
+        done
+    else
+        yum makecache -q >/dev/null 2>&1 || true
+        for pkg in netcat nc gcc cmake make telnet; do
+            yum remove -y -q "$pkg" >/dev/null 2>&1 || true
+        done
+    fi
     
 }
 
 DEBIAN(){
-    apt-get -y purge netcat nc gcc cmake make telnet
+    apt-get update -qq || true
+    for pkg in netcat netcat-openbsd nc gcc cmake make telnet; do
+        apt-get -y purge "$pkg" >/dev/null 2>&1 || true
+    done
 }
 
 UBUNTU(){
@@ -24,10 +37,10 @@ SLACK(){
     echo "its fucked"
 }
 
-if command -v yum >/dev/null ; then
+if command -v dnf >/dev/null || command -v yum >/dev/null ; then
     RHEL
 elif command -v apt-get >/dev/null ; then
-    if $(cat /etc/os-release | grep -qi Ubuntu); then
+    if grep -qi Ubuntu /etc/os-release; then
         UBUNTU
     else
         DEBIAN

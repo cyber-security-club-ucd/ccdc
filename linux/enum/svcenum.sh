@@ -13,7 +13,9 @@ fi
 if [ "$svc_name" = "ALL" ] || [ "$svc_name" = "FTP" ] ; then
     echo "FTP"
     echo "---"
-    cat /etc/*ftp* | grep -v '#' | grep -E 'anonymous_enable|guest_enable|no_anon_password|write_enable|local_root|anon_root'
+    if ls /etc/*ftp* >/dev/null 2>&1; then
+        cat /etc/*ftp* 2>/dev/null | grep -v '#' | grep -E 'anonymous_enable|guest_enable|no_anon_password|write_enable|local_root|anon_root' || true
+    fi
 fi
 
 if [ "$svc_name" = "ALL" ] || [ "$svc_name" = "APACHE" ] ; then
@@ -44,5 +46,7 @@ fi
 if [ "$svc_name" = "ALL" ] || [ "$svc_name" = "SMB" ] ; then
     echo "SMB"
     echo "---"
-    grep -E -A 6 "^\s*\[(.+)\]" /etc/samba/smb.conf | grep -v "^\s*#" | grep -v "^\s*$"
+    if [ -f /etc/samba/smb.conf ]; then
+        grep -E -A 6 "^\s*\[(.+)\]" /etc/samba/smb.conf | grep -v "^\s*#" | grep -v "^\s*$" || true
+    fi
 fi
