@@ -1,11 +1,3 @@
-<# 
-Ridge Checked: Yes
-Ran on a test box: NO  
-Needs modification?: YES  
-- remove admin accounts maybe.... 
-- lookinto password local policy settings (min length, complexity, history, etc) and set those too 
-#>
-
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
