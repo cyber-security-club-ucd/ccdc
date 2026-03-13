@@ -124,7 +124,7 @@ function Get-BackupId {
 
     $bkupInfoPath = Join-Path $BackupFolder.FullName "bkupInfo.xml"
     [xml]$bkupInfo = Get-Content $bkupInfoPath -Raw
-    $backupId = $bkupInfo.BackupInst.ID
+    $backupId = $bkupInfo.BackupInst.ID.InnerText
 
     if ([string]::IsNullOrWhiteSpace($backupId)) {
         # Fall back to the folder name itself (already a GUID)
@@ -135,6 +135,7 @@ function Get-BackupId {
     Write-INFO "Backup ID: $backupId"
     return $backupId
 }
+
 
 # -- 4. Create New GPO --------------------------------------------------------
 function New-BaselineGPO {
@@ -168,16 +169,27 @@ function Import-BaselineGPO {
         [string]$GPOName,
         [string]$BackupId,
         [string]$BackupPath,
-        [string]$Domain
+        [string]$Domain,
+        [string]$MigrationTable = ""
     )
 
     Write-INFO "Importing GPO backup (BackupId: $BackupId) into GPO '$GPOName'..."
 
     if ($PSCmdlet.ShouldProcess("GPO '$GPOName'", "Import backup '$BackupId' from '$BackupPath'")) {
-        Import-GPO -BackupId $BackupId `
-                   -TargetName $GPOName `
-                   -Path $BackupPath `
-                   -Domain $Domain | Out-Null
+        $importParams = @{
+            BackupId      = $BackupId
+            TargetName    = $GPOName
+            Path          = $BackupPath
+            Domain        = $Domain
+            CreateIfNeeded = $true
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($MigrationTable)) {
+            $importParams['MigrationTable'] = $MigrationTable
+            Write-INFO "Using migration table: $MigrationTable"
+        }
+
+        Import-GPO @importParams | Out-Null
 
         Write-OK "GPO backup imported successfully into '$GPOName'."
     } else {
@@ -229,14 +241,34 @@ try {
     # Import-GPO expects the *parent* of the GUID folder as -Path
     $importPath = $backupFolder.Parent.FullName
 
+    $migtable = Join-Path $PSScriptRoot "importtable.migtable"
+    if (-not (Test-Path $migtable)) {
+        Write-WARN "Migration table not found at: $migtable"
+        Write-WARN "Opening GPMC -- create a migration table, save it to the path above, then return here."
+        Start-Process "gpmc.msc"
+        Read-Host "Press Enter when the migration table is ready"
+        if (-not (Test-Path $migtable)) {
+            throw "Migration table still not found at '$migtable'. Aborting."
+        }
+    }
+    Write-INFO "Using migration table: $migtable"
+
     Write-STEP "Creating GPO in Active Directory"
     $gpo = New-BaselineGPO -Name $GPOName -Domain $Domain
 
     Write-STEP "Importing GPO backup"
-    Import-BaselineGPO -GPOName $GPOName `
-                       -BackupId $backupId `
-                       -BackupPath $importPath `
-                       -Domain $Domain
+    try {
+        Import-BaselineGPO -GPOName         $GPOName `
+                           -BackupId        $backupId `
+                           -BackupPath      $importPath `
+                           -Domain          $Domain `
+                           -MigrationTable  $migtable
+    } catch {
+        Write-CRIT "Import-GPO failed: $_"
+        Write-CRIT "Exception detail: $($_.Exception.GetType().FullName)"
+        Write-CRIT "Stack: $($_.ScriptStackTrace)"
+        exit 1
+    }
 
     if (-not [string]::IsNullOrWhiteSpace($TargetOU)) {
         Write-STEP "Linking GPO to OU"
@@ -250,6 +282,8 @@ try {
     Write-Host ""
 
 } catch {
-    Write-CRIT "Deployment failed: $_"
+    Write-CRIT "Deployment failed at step: $_"
+    Write-CRIT "Exception detail: $($_.Exception.GetType().FullName)"
+    Write-CRIT "Stack: $($_.ScriptStackTrace)"
     exit 1
 }

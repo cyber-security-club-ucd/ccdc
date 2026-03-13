@@ -57,6 +57,8 @@ $scripts = @(
     @{ Key="7"; Name="AD Security (Kerberos/ASREP)"; File="07_ADSecurity.ps1";     Desc="AS-REP roasting, Kerberoasting, AdminSDHolder" },
     @{ Key="8"; Name="Firewall Hardening";           File="08_Firewall.ps1";        Desc="Enable FW, restrict Admin login to inside IPs" },
     @{ Key="9"; Name="Non-Windows Service Audit";    File="09_NonWinServices.ps1";  Desc="PHP, config files, version checks, hardening" },
+    @{ Key="D"; Name="Tool Download";                File="10_ToolDownload.ps1";    Desc="Downloads hardening tools from internet" },
+    @{ Key="G"; Name="GPO Deploy";                   File="11_GPODeploy.ps1";       Desc="Deploys some GPO templates to a new GPO object" },
     @{ Key="A"; Name="RUN ALL (Audit Only)";         File="";                       Desc="Run scripts 1,3,4,5,6,7 silently and log" },
     @{ Key="Q"; Name="Quit";                         File="";                       Desc="" }
 )
